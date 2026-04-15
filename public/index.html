@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReqRoute · Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f4f5f7;color:#1a2332;font-size:14px;min-height:100vh}
+a{color:inherit;text-decoration:none}
+input,select,textarea,button{font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+button{cursor:pointer;border:1px solid #d0d5dd;background:#fff;padding:7px 14px;border-radius:6px;transition:.15s}
+button:hover{background:#f4f5f7}
+button.primary{background:#1a2332;color:#fff;border-color:#1a2332}
+button.primary:hover{background:#2d3b4e}
+button.danger{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
+button.danger:hover{background:#fecaca}
+button.sm{padding:4px 10px;font-size:13px}
+input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:6px;padding:8px 10px;background:#fff;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:#1a2332;box-shadow:0 0 0 3px rgba(26,35,50,.08)}
+.hidden{display:none!important}
+
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a2332 0%,#2d3b4e 100%)}
+.auth-box{background:#fff;border-radius:16px;padding:2.5rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.auth-logo{font-size:22px;font-weight:600;color:#1a2332;margin-bottom:.25rem}
+.auth-sub{font-size:13px;color:#6b7280;margin-bottom:2rem}
+.auth-box h2{font-size:18px;font-weight:500;margin-bottom:1.5rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
+.auth-footer{text-align:center;margin-top:1.25rem;font-size:13px;color:#6b7280}
+.auth-footer a{color:#1a2332;font-weight:500;cursor:pointer}
+.error-msg{color:#b91c1c;font-size:13px;margin-top:.75rem;padding:8px 10px;background:#fee2e2;border-radius:6px;display:none}
+
+header{background:#1a2332;color:#fff;padding:0 1.5rem;display:flex;align-items:center;height:54px;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.logo{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
+.logo span{color:#93c5fd}
+header .badge{background:rgba(255,255,255,.12);font-size:11px;padding:3px 8px;border-radius:4px;color:#e2e8f0}
+header .user-info{font-size:13px;color:#cbd5e1;display:flex;align-items:center;gap:8px}
+header button{background:transparent;border:1px solid rgba(255,255,255,.2);color:#e2e8f0;font-size:13px;padding:5px 12px;border-radius:6px}
+header button:hover{background:rgba(255,255,255,.1)}
+
+main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+.stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.875rem 1rem}
+.stat-label{font-size:12px;color:#6b7280;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:600;color:#1a2332}
+.stat-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid #e5e7eb;margin-bottom:1.25rem}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 20px;font-size:14px;color:#6b7280;margin-bottom:-1px;font-weight:400}
+.tab-btn.active{border-bottom-color:#1a2332;color:#1a2332;font-weight:500}
+
+.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1;min-width:180px}
+.toolbar select{width:auto;min-width:130px}
+
+.list-header{display:grid;gap:8px;padding:6px 1rem;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb;margin-bottom:4px;cursor:pointer}
+.list-header span{display:flex;align-items:center;gap:4px;user-select:none}
+.list-header span:hover{color:#374151}
+.sort-icon{font-size:10px;opacity:.5}
+.sort-icon.active{opacity:1;color:#1a2332}
+.list-internal .list-header,.list-internal .employee-row{grid-template-columns:2fr 1.5fr 1fr 1.2fr 1fr .8fr 60px}
+.list-resources .list-header,.list-resources .employee-row{grid-template-columns:2fr 1.5fr 1fr 1fr 1.2fr .8fr .8fr 60px}
+
+.employee-row{display:grid;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 1rem;margin-bottom:6px;align-items:center;transition:.15s;cursor:pointer}
+.employee-row:hover{border-color:#94a3b8;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.emp-name{font-weight:500;color:#1a2332;display:flex;align-items:center;gap:8px}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:#fff}
+.emp-cell{color:#374151;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emp-cell.muted{color:#9ca3af}
+.status-badge{font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500;white-space:nowrap;display:inline-block}
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-lg{max-width:700px}
+.modal h2{font-size:16px;font-weight:500;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.modal h2 .close-btn{background:transparent;border:none;font-size:20px;color:#9ca3af;padding:0 4px;line-height:1}
+.modal h2 .close-btn:hover{color:#374151}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.875rem}
+.form-full{grid-column:1/-1}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:8px}
+.modal-footer .right{display:flex;gap:8px}
+
+.drop-zone{border:2px dashed #d0d5dd;border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:.15s;margin-bottom:1rem}
+.drop-zone:hover,.drop-zone.drag{border-color:#1a2332;background:#f8f9fb}
+.drop-zone p{color:#6b7280;font-size:14px;margin-top:.5rem}
+.preview-table-wrap{overflow-x:auto;max-height:260px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:1rem}
+.preview-table{width:100%;border-collapse:collapse;font-size:13px}
+.preview-table th{background:#f4f5f7;padding:7px 10px;text-align:left;border-bottom:1px solid #e5e7eb;font-weight:500;white-space:nowrap;position:sticky;top:0}
+.preview-table td{padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+.col-map{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:.5rem;font-size:13px}
+.col-map select{padding:5px 8px}
+
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.user-row:last-child{border-bottom:none}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#374151;flex-shrink:0}
+.user-info-row{flex:1;min-width:0}
+.user-name{font-weight:500;font-size:14px;color:#1a2332}
+.user-email{font-size:12px;color:#9ca3af}
+
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a2332;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:.3s;pointer-events:none;max-width:300px}
+.toast.show{opacity:1}
+.toast.success{background:#065f46}
+.toast.error{background:#b91c1c}
+
+.empty-state{text-align:center;padding:3rem;color:#9ca3af;font-size:14px}
+
+@media(max-width:700px){
+.stats-grid{grid-template-columns:1fr 1fr}
+.list-internal .list-header,.list-resources .list-header{display:none}
+.list-internal .employee-row,.list-resources .employee-row{grid-template-columns:1fr;padding:.75rem 1rem}
+.form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">ReqRoute</div>
+    <div class="auth-sub">Employee &amp; Resource Directory</div>
+    <h2 id="auth-heading">Sign in to your account</h2>
+    <div class="field"><label>Email address</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="auth-password" placeholder="Password" autocomplete="current-password"></div>
+    <div id="auth-name-field" class="field hidden"><label>Full Name</label><input type="text" id="auth-name" placeholder="Your name"></div>
+    <button class="primary" id="auth-btn" style="width:100%;margin-top:.25rem">Sign In</button>
+    <div id="auth-error" class="error-msg"></div>
+    <div class="auth-footer">
+      <span id="auth-toggle-text">Don't have an account?</span>
+      <a id="auth-toggle"> Sign up</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
+  <header>
+    <div class="logo">ReqRoute <span>&middot;</span> Directory</div>
+    <div class="user-info">
+      <span id="header-name"></span>
+      <span id="admin-badge" class="badge hidden">Admin</span>
+    </div>
+    <button id="users-btn" class="hidden">Manage Users</button>
+    <button id="changepw-btn">Change Password</button>
+    <button id="logout-btn">Sign Out</button>
+  </header>
+
+  <main>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Internal Employees</div><div class="stat-val" id="stat-int">0</div><div class="stat-sub" id="stat-int-active">0 active</div></div>
+      <div class="stat-card"><div class="stat-label">Resources</div><div class="stat-val" id="stat-res">0</div><div class="stat-sub" id="stat-res-active">0 active</div></div>
+      <div class="stat-card"><div class="stat-label">Total Headcount</div><div class="stat-val" id="stat-total">0</div><div class="stat-sub">across both groups</div></div>
+      <div class="stat-card"><div class="stat-label">Last Updated</div><div class="stat-val" id="stat-updated" style="font-size:15px;margin-top:4px">&mdash;</div><div class="stat-sub" id="stat-updated-by"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="internal">Internal Employees <span id="tab-int-count"></span></button>
+      <button class="tab-btn" data-tab="resources">Resources / Contractors <span id="tab-res-count"></span></button>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="search-input" placeholder="Search name, title, client, email...">
+      <select id="filter-status"><option value="">All Status</option></select>
+      <select id="sort-field">
+        <option value="name">Sort: Name</option>
+        <option value="title">Sort: Title</option>
+        <option value="start_date">Sort: Start Date</option>
+        <option value="status">Sort: Status</option>
+        <option value="client_name">Sort: Client</option>
+        <option value="department">Sort: Department</option>
+      </select>
+      <select id="sort-dir"><option value="asc">A &rarr; Z</option><option value="desc">Z &rarr; A</option></select>
+      <button id="import-btn" class="admin-only hidden">Import Excel/CSV</button>
+      <button id="export-btn">Export Excel</button>
+      <button id="add-btn" class="primary admin-only hidden">+ Add</button>
+    </div>
+
+    <div id="employee-list"></div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div id="emp-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2><span id="modal-title">Add Employee</span><button class="close-btn" onclick="closeModal('emp-modal')">&#215;</button></h2>
+    <div id="modal-form-fields"></div>
+    <div class="modal-footer">
+      <button class="danger sm" id="delete-btn" onclick="confirmDelete()">Delete</button>
+      <div class="right">
+        <button onclick="closeModal('emp-modal')">Cancel</button>
+        <button class="primary" id="save-btn" onclick="saveEmployee()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div id="import-modal" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <h2>Import from Excel / CSV<button class="close-btn" onclick="closeModal('import-modal')">&#215;</button></h2>
+    <div id="import-content">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:28px">&#128194;</div>
+        <strong>Click to choose file</strong>
+        <p>Supports .xlsx, .xls, .csv &mdash; drop here or click to browse</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
+      <div id="import-preview" class="hidden">
+        <div id="col-mapping"></div>
+        <div class="preview-table-wrap"><table class="preview-table" id="preview-table"></table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="preview-count" style="font-size:13px;color:#6b7280"></span>
+          <div style="display:flex;gap:8px">
+            <button onclick="resetImport()">Choose different file</button>
+            <button class="primary" onclick="runImport()">Import all rows</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USERS MODAL -->
+<div id="users-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Manage Users <span style="font-size:13px;font-weight:400;color:#9ca3af" id="user-count"></span><button class="close-btn" onclick="closeModal('users-modal')">&#215;</button></h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:1rem">Users appear here after they sign up. Toggle admin access below.</p>
+    <div id="users-list"></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div id="del-modal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:360px">
+    <h2>Delete record?<button class="close-btn" onclick="closeModal('del-modal')">&#215;</button></h2>
+    <p style="color:#6b7280;font-size:14px;margin-bottom:1.5rem">This will permanently delete this entry. Everyone will see it removed immediately.</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="closeModal('del-modal')">Cancel</button>
+      <button class="danger" id="confirm-del-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div id="changepw-modal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:400px">
+    <h2>Change Password<button class="close-btn" onclick="closeModal('changepw-modal')">&#215;</button></h2>
+    <div class="field"><label>Current Password</label><input type="password" id="cp-current" placeholder="Enter current password"></div>
+    <div class="field"><label>New Password</label><input type="password" id="cp-new" placeholder="At least 6 characters"></div>
+    <div class="field"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Re-enter new password"></div>
+    <div id="cp-error" class="error-msg"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
+      <button onclick="closeModal('changepw-modal')">Cancel</button>
+      <button class="primary" id="cp-save-btn" onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN RESET PASSWORD MODAL -->
+<div id="resetpw-modal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:400px">
+    <h2>Reset Password<button class="close-btn" onclick="closeModal('resetpw-modal')">&#215;</button></h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:1rem">Set a new password for <strong id="rp-username"></strong></p>
+    <div class="field"><label>New Password</label><input type="password" id="rp-new" placeholder="At least 6 characters"></div>
+    <div class="field"><label>Confirm Password</label><input type="password" id="rp-confirm" placeholder="Re-enter password"></div>
+    <div id="rp-error" class="error-msg"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
+      <button onclick="closeModal('resetpw-modal')">Cancel</button>
+      <button class="primary" id="rp-save-btn" onclick="adminResetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null, isAdmin = false, currentTab = 'internal';
+let allEmployees = [], editingId = null, deleteId = null;
+let importRows = [], eventSource = null;
+
+const FIELDS_INT = [
+  {k:'name',l:'Full Name',req:true},{k:'title',l:'Job Title',req:true},
+  {k:'department',l:'Department'},{k:'email',l:'Email'},{k:'phone',l:'Phone'},
+  {k:'location',l:'Location / Office'},{k:'manager',l:'Manager'},
+  {k:'employeeId',l:'Employee ID'},{k:'startDate',l:'Start Date',t:'date'},
+  {k:'status',l:'Status',t:'sel',opts:['Active','On Leave','Inactive']},
+  {k:'notes',l:'Notes',t:'ta',full:true}
+];
+const FIELDS_RES = [
+  {k:'name',l:'Full Name',req:true},{k:'title',l:'Job Title',req:true},
+  {k:'email',l:'Email'},{k:'phone',l:'Phone'},
+  {k:'clientName',l:'Client Name'},{k:'vendorName',l:'Vendor Name'},
+  {k:'processName',l:'Process / Project Name'},{k:'location',l:'Location'},
+  {k:'startDate',l:'Start Date',t:'date'},{k:'endDate',l:'End Date',t:'date'},
+  {k:'billRate',l:'Bill Rate ($/hr)'},{k:'payRate',l:'Pay Rate ($/hr)'},
+  {k:'recruiter',l:'Recruiter / Lead'},
+  {k:'status',l:'Status',t:'sel',opts:['Active','On Assignment','Available','Ended']},
+  {k:'notes',l:'Notes',t:'ta',full:true}
+];
+
+const DB_MAP = {employeeId:'employee_id',startDate:'start_date',endDate:'end_date',clientName:'client_name',vendorName:'vendor_name',processName:'process_name',billRate:'bill_rate',payRate:'pay_rate',updatedAt:'updated_at',updatedBy:'updated_by'};
+const INV_MAP = Object.fromEntries(Object.entries(DB_MAP).map(([k,v])=>[v,k]));
+function toUI(emp){const o={...emp};for(const[db,ui]of Object.entries(INV_MAP)){if(db in o){o[ui]=o[db];delete o[db]}}return o}
+
+const STATUS_COLORS = {
+  Active:{bg:'#d1fae5',c:'#065f46'},'On Assignment':{bg:'#dbeafe',c:'#1e40af'},
+  Available:{bg:'#e0f2fe',c:'#0369a1'},Ended:{bg:'#fee2e2',c:'#b91c1c'},
+  'On Leave':{bg:'#fef3c7',c:'#92400e'},Inactive:{bg:'#f3f4f6',c:'#6b7280'}
+};
+const AVATAR_COLORS=['#2563eb','#059669','#d97706','#7c3aed','#db2777','#dc2626','#0891b2'];
+function avatarColor(n){let h=0;for(let i=0;i<(n||'').length;i++)h=(h*31+n.charCodeAt(i))%AVATAR_COLORS.length;return AVATAR_COLORS[h]}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function fmtDate(d){if(!d)return'';try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}catch{return d}}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: {'Content-Type':'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Auth ──
+let authMode = 'signin';
+document.getElementById('auth-toggle').addEventListener('click', () => {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  document.getElementById('auth-heading').textContent = authMode === 'signin' ? 'Sign in to your account' : 'Create your account';
+  document.getElementById('auth-btn').textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-toggle-text').textContent = authMode === 'signin' ? "Don't have an account?" : "Already have an account?";
+  document.getElementById('auth-toggle').textContent = authMode === 'signin' ? ' Sign up' : ' Sign in';
+  document.getElementById('auth-name-field').classList.toggle('hidden', authMode === 'signin');
+  document.getElementById('auth-error').style.display = 'none';
+});
+
+document.getElementById('auth-btn').addEventListener('click', async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pw = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if (!email || !pw) { errEl.textContent = 'Email and password required'; errEl.style.display = 'block'; return; }
+  try {
+    if (authMode === 'signup') {
+      const data = await api('/api/auth/signup', { method: 'POST', body: { email, password: pw, displayName: name } });
+      if (data.firstUser) toast('Welcome! You are the first user \u2014 admin access granted.', 'success');
+      currentUser = data;
+    } else {
+      currentUser = await api('/api/auth/login', { method: 'POST', body: { email, password: pw } });
+    }
+    isAdmin = currentUser.role === 'admin';
+    showApp();
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+});
+
+['auth-email','auth-password','auth-name'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('auth-btn').click(); });
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  await api('/api/auth/logout', { method: 'POST' });
+  currentUser = null; isAdmin = false;
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+});
+
+(async () => {
+  try {
+    currentUser = await api('/api/auth/me');
+    isAdmin = currentUser.role === 'admin';
+    showApp();
+  } catch { /* not logged in */ }
+})();
+
+function showApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('header-name').textContent = currentUser.displayName || currentUser.email;
+  applyAdminUI();
+  loadEmployees();
+  connectSSE();
+}
+
+function applyAdminUI() {
+  document.getElementById('admin-badge').classList.toggle('hidden', !isAdmin);
+  document.getElementById('users-btn').classList.toggle('hidden', !isAdmin);
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
+}
+
+// ── SSE: Real-time ──
+function connectSSE() {
+  if (eventSource) eventSource.close();
+  eventSource = new EventSource('/api/events');
+  eventSource.addEventListener('employee-change', e => {
+    const data = JSON.parse(e.data);
+    if (data.action === 'reload') {
+      allEmployees = data.employees.map(toUI);
+    } else if (data.action === 'add') {
+      const emp = toUI(data.employee);
+      if (!allEmployees.find(x => x.id === emp.id)) allEmployees.push(emp);
+    } else if (data.action === 'update') {
+      const emp = toUI(data.employee);
+      const idx = allEmployees.findIndex(x => x.id === emp.id);
+      if (idx >= 0) allEmployees[idx] = emp; else allEmployees.push(emp);
+    } else if (data.action === 'delete') {
+      allEmployees = allEmployees.filter(x => x.id !== data.id);
+    }
+    renderList(); updateStats();
+  });
+  eventSource.onerror = () => { setTimeout(connectSSE, 3000); };
+}
+
+async function loadEmployees() {
+  try {
+    const rows = await api('/api/employees');
+    allEmployees = rows.map(toUI);
+    renderList(); updateStats();
+  } catch (e) { toast('Failed to load data: ' + e.message, 'error'); }
+}
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    updateStatusFilter(); renderList();
+  });
+});
+
+document.getElementById('search-input').addEventListener('input', renderList);
+document.getElementById('filter-status').addEventListener('change', renderList);
+document.getElementById('sort-field').addEventListener('change', renderList);
+document.getElementById('sort-dir').addEventListener('change', renderList);
+
+function updateStatusFilter() {
+  const opts = currentTab === 'internal' ? ['Active','On Leave','Inactive'] : ['Active','On Assignment','Available','Ended'];
+  document.getElementById('filter-status').innerHTML = '<option value="">All Status</option>' + opts.map(o => `<option>${o}</option>`).join('');
+}
+updateStatusFilter();
+
+function getFiltered() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  const sf = document.getElementById('sort-field').value;
+  const sd = document.getElementById('sort-dir').value;
+  let list = allEmployees.filter(e => e.type === currentTab);
+  if (q) list = list.filter(e => Object.values(e).some(v => String(v || '').toLowerCase().includes(q)));
+  if (st) list = list.filter(e => e.status === st);
+  list.sort((a, b) => {
+    let va = String(a[sf] || '').toLowerCase(), vb = String(b[sf] || '').toLowerCase();
+    return sd === 'asc' ? (va > vb ? 1 : va < vb ? -1 : 0) : (va < vb ? 1 : va > vb ? -1 : 0);
+  });
+  return list;
+}
+
+function renderList() {
+  const list = getFiltered();
+  const container = document.getElementById('employee-list');
+  const cols = currentTab === 'internal'
+    ? ['Name','Title','Department','Email','Phone','Status','']
+    : ['Name','Title','Client','Vendor','Process / Project','Start','Status',''];
+  const tabClass = 'list-' + (currentTab === 'internal' ? 'internal' : 'resources');
+
+  document.getElementById('tab-int-count').textContent = '(' + allEmployees.filter(e => e.type === 'internal').length + ')';
+  document.getElementById('tab-res-count').textContent = '(' + allEmployees.filter(e => e.type === 'resources').length + ')';
+
+  if (!list.length) {
+    container.innerHTML = `<div class="${tabClass}"><div class="empty-state">No records found. ${isAdmin ? 'Click <strong>+ Add</strong> to get started or import from Excel.' : ''}</div></div>`;
+    return;
+  }
+
+  const sf = document.getElementById('sort-field').value;
+  const sd = document.getElementById('sort-dir').value;
+  const colKeys = currentTab === 'internal'
+    ? ['name','title','department','email','phone','status']
+    : ['name','title','client_name','vendor_name','process_name','start_date','status'];
+  const headerHTML = cols.map((c, i) => {
+    if (!c) return '<span></span>';
+    const key = colKeys[i]; const isActive = sf === key;
+    return `<span onclick="setSort('${key}')">${c}<span class="sort-icon${isActive ? ' active' : ''}">${isActive ? (sd === 'asc' ? '\u25B2' : '\u25BC') : '\u21C5'}</span></span>`;
+  }).join('');
+
+  const rowsHTML = list.map(e => {
+    const sc = STATUS_COLORS[e.status] || {bg:'#f3f4f6',c:'#6b7280'};
+    const av = avatarColor(e.name);
+    const cells = currentTab === 'internal'
+      ? [
+          `<div class="emp-name"><div class="avatar" style="background:${av}">${initials(e.name)}</div>${esc(e.name||'\u2014')}</div>`,
+          `<div class="emp-cell">${esc(e.title||'\u2014')}</div>`,
+          `<div class="emp-cell muted">${esc(e.department||'\u2014')}</div>`,
+          `<div class="emp-cell" style="color:#2563eb">${esc(e.email||'\u2014')}</div>`,
+          `<div class="emp-cell muted">${esc(e.phone||'\u2014')}</div>`,
+          `<div><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(e.status||'\u2014')}</span></div>`,
+        ]
+      : [
+          `<div class="emp-name"><div class="avatar" style="background:${av}">${initials(e.name)}</div>${esc(e.name||'\u2014')}</div>`,
+          `<div class="emp-cell">${esc(e.title||'\u2014')}</div>`,
+          `<div class="emp-cell muted">${esc(e.clientName||'\u2014')}</div>`,
+          `<div class="emp-cell muted">${esc(e.vendorName||'\u2014')}</div>`,
+          `<div class="emp-cell">${esc(e.processName||'\u2014')}</div>`,
+          `<div class="emp-cell muted">${fmtDate(e.startDate)||'\u2014'}</div>`,
+          `<div><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(e.status||'\u2014')}</span></div>`,
+        ];
+    const actCell = isAdmin
+      ? `<div class="actions-cell"><button class="sm" onclick="openEdit('${e.id}',event)">Edit</button></div>`
+      : `<div class="actions-cell"></div>`;
+    return `<div class="employee-row ${tabClass}" onclick="openEdit('${e.id}',event)">${cells.join('')}${actCell}</div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="${tabClass}"><div class="list-header ${tabClass}">${headerHTML}</div>${rowsHTML}</div>`;
+}
+
+function setSort(field) {
+  const sd = document.getElementById('sort-dir');
+  if (document.getElementById('sort-field').value === field) sd.value = sd.value === 'asc' ? 'desc' : 'asc';
+  else { document.getElementById('sort-field').value = field; sd.value = 'asc'; }
+  renderList();
+}
+
+function updateStats() {
+  const ints = allEmployees.filter(e => e.type === 'internal');
+  const res = allEmployees.filter(e => e.type === 'resources');
+  document.getElementById('stat-int').textContent = ints.length;
+  document.getElementById('stat-int-active').textContent = ints.filter(e => e.status === 'Active').length + ' active';
+  document.getElementById('stat-res').textContent = res.length;
+  document.getElementById('stat-res-active').textContent = res.filter(e => e.status === 'Active' || e.status === 'On Assignment').length + ' active/on-assignment';
+  document.getElementById('stat-total').textContent = allEmployees.length;
+  const sorted = [...allEmployees].sort((a, b) => (b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1);
+  const recent = sorted[0];
+  if (recent?.updatedAt) {
+    document.getElementById('stat-updated').textContent = new Date(recent.updatedAt).toLocaleDateString('en-IN', {day:'2-digit',month:'short'});
+    document.getElementById('stat-updated-by').textContent = 'by ' + (recent.updatedBy || 'someone');
+  }
+}
+
+// ── Add / Edit ──
+document.getElementById('add-btn').addEventListener('click', () => openAdd());
+function openAdd() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add ' + (currentTab === 'internal' ? 'Employee' : 'Resource');
+  document.getElementById('delete-btn').style.display = 'none';
+  buildForm({});
+  document.getElementById('emp-modal').classList.remove('hidden');
+}
+function openEdit(id, e) {
+  if (e) e.stopPropagation();
+  const emp = allEmployees.find(x => x.id === id);
+  if (!emp) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit: ' + emp.name;
+  document.getElementById('delete-btn').style.display = isAdmin ? '' : 'none';
+  buildForm(emp);
+  document.getElementById('emp-modal').classList.remove('hidden');
+}
+function buildForm(data) {
+  const fields = data.type === 'resources' || currentTab === 'resources' ? FIELDS_RES : FIELDS_INT;
+  const html = '<div class="form-grid">' + fields.map(f => {
+    const val = data[f.k] || '';
+    let inp = '';
+    if (f.t === 'sel') inp = `<select id="f_${f.k}"><option value="">\u2014</option>${f.opts.map(o => `<option${val === o ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
+    else if (f.t === 'ta') inp = `<textarea id="f_${f.k}" rows="2">${esc(val)}</textarea>`;
+    else inp = `<input type="${f.t || 'text'}" id="f_${f.k}" value="${val.toString().replace(/"/g, '&quot;')}">`;
+    return `<div class="${f.full ? 'form-full' : ''}"><div class="field"><label>${f.l}${f.req ? '<span style="color:#b91c1c"> *</span>' : ''}</label>${inp}</div></div>`;
+  }).join('') + '</div>';
+  document.getElementById('modal-form-fields').innerHTML = html;
+}
+
+async function saveEmployee() {
+  const fields = editingId
+    ? ((allEmployees.find(x => x.id === editingId) || {}).type === 'resources' ? FIELDS_RES : FIELDS_INT)
+    : (currentTab === 'resources' ? FIELDS_RES : FIELDS_INT);
+  const data = {type: editingId ? (allEmployees.find(x => x.id === editingId) || {}).type || currentTab : currentTab};
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById('f_' + f.k);
+    if (!el) return;
+    data[f.k] = el.value.trim();
+    if (f.req && !data[f.k]) valid = false;
+  });
+  if (!valid) { toast('Please fill in all required fields', 'error'); return; }
+  document.getElementById('save-btn').textContent = 'Saving\u2026';
+  try {
+    if (editingId) await api('/api/employees/' + editingId, {method:'PUT', body:data});
+    else await api('/api/employees', {method:'POST', body:data});
+    closeModal('emp-modal');
+    toast('Saved successfully', 'success');
+    await loadEmployees();
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+  document.getElementById('save-btn').textContent = 'Save';
+}
+
+function confirmDelete() { deleteId = editingId; document.getElementById('del-modal').classList.remove('hidden'); }
+document.getElementById('confirm-del-btn').addEventListener('click', async () => {
+  if (!deleteId) return;
+  try {
+    await api('/api/employees/' + deleteId, {method:'DELETE'});
+    closeModal('del-modal'); closeModal('emp-modal');
+    toast('Deleted', 'success');
+    await loadEmployees();
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+  deleteId = null;
+});
+
+// ── Export ──
+document.getElementById('export-btn').addEventListener('click', () => {
+  const list = getFiltered();
+  if (!list.length) { toast('No records to export'); return; }
+  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
+  const headers = fields.map(f => f.l);
+  const rows = list.map(e => fields.map(f => e[f.k] || ''));
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, currentTab === 'internal' ? 'Internal' : 'Resources');
+  XLSX.writeFile(wb, `ReqRoute_${currentTab}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Excel downloaded', 'success');
+});
+
+// ── Import ──
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-modal').classList.remove('hidden'); resetImport();
+});
+document.getElementById('file-input').addEventListener('change', e => handleImportFile(e.target.files[0]));
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleImportFile(e.dataTransfer.files[0]); });
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'binary'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if (data.length < 2) { toast('File appears empty', 'error'); return; }
+    importRows = data;
+    showImportPreview(data);
+  };
+  reader.readAsBinaryString(file);
+}
+
+function showImportPreview(data) {
+  const headers = data[0];
+  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
+  document.getElementById('preview-count').textContent = (data.length - 1) + ' rows found';
+  const mapHTML = '<div style="margin-bottom:1rem"><strong style="font-size:13px">Column Mapping</strong><p style="font-size:12px;color:#9ca3af;margin:.25rem 0 .75rem">Match your file columns to the directory fields</p>' +
+    fields.filter(f => f.k !== 'notes').map(f => `
+    <div class="col-map">
+      <span style="color:#374151">${f.l}</span>
+      <span style="color:#9ca3af;font-size:18px">\u2190</span>
+      <select id="map_${f.k}"><option value="">\u2014 skip \u2014</option>${headers.map((h, i) => `<option value="${i}"${h.toLowerCase().includes(f.k.toLowerCase()) || h.toLowerCase().includes(f.l.toLowerCase()) ? 'selected' : ''}>${esc(String(h))}</option>`).join('')}</select>
+    </div>`).join('') + '</div>';
+  const preview = data.slice(1, 6);
+  const previewHTML = '<table class="preview-table"><thead><tr>' + headers.map(h => `<th>${esc(String(h))}</th>`).join('') + '</tr></thead><tbody>' +
+    preview.map(r => '<tr>' + r.map(c => `<td>${esc(String(c))}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+  document.getElementById('col-mapping').innerHTML = mapHTML;
+  document.querySelector('.preview-table-wrap').innerHTML = previewHTML;
+  document.getElementById('import-preview').classList.remove('hidden');
+  document.getElementById('drop-zone').classList.add('hidden');
+}
+
+async function runImport() {
+  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
+  const mapped = importRows.slice(1).map(row => {
+    const data = {};
+    fields.filter(f => f.k !== 'notes').forEach(f => {
+      const sel = document.getElementById('map_' + f.k);
+      if (sel && sel.value !== '') data[f.k] = String(row[parseInt(sel.value)] || '').trim();
+    });
+    return data;
+  }).filter(d => d.name);
+  try {
+    const result = await api('/api/employees/import', {method:'POST', body:{rows:mapped, type:currentTab}});
+    closeModal('import-modal');
+    toast(`Imported ${result.imported} records successfully`, 'success');
+    await loadEmployees();
+  } catch (e) { toast('Import error: ' + e.message, 'error'); }
+}
+
+function resetImport() {
+  importRows = [];
+  document.getElementById('drop-zone').classList.remove('hidden');
+  document.getElementById('import-preview').classList.add('hidden');
+  document.getElementById('file-input').value = '';
+}
+
+// ── Users ──
+document.getElementById('users-btn').addEventListener('click', async () => {
+  document.getElementById('users-modal').classList.remove('hidden');
+  try { renderUsers(await api('/api/users')); } catch (e) { toast('Error loading users', 'error'); }
+});
+
+function renderUsers(users) {
+  document.getElementById('user-count').textContent = '(' + users.length + ' users)';
+  document.getElementById('users-list').innerHTML = users.map(u => {
+    const isMe = u.id === currentUser.id;
+    const isUAdmin = u.role === 'admin';
+    return `<div class="user-row">
+      <div class="user-avatar">${initials(u.display_name || u.email)}</div>
+      <div class="user-info-row">
+        <div class="user-name">${esc(u.display_name || '\u2014')} ${isMe ? '<span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:3px;font-weight:400">(you)</span>' : ''}</div>
+        <div class="user-email">${esc(u.email)}</div>
+      </div>
+      <span class="status-badge" style="background:${isUAdmin ? '#dbeafe' : '#f3f4f6'};color:${isUAdmin ? '#1e40af' : '#6b7280'}">${isUAdmin ? 'Admin' : 'User'}</span>
+      ${!isMe ? `<button class="sm" onclick="toggleAdmin('${u.id}','${u.role}')">${isUAdmin ? 'Remove Admin' : 'Make Admin'}</button><button class="sm" onclick="openResetPassword('${u.id}','${esc(u.display_name || u.email)}')">Reset PW</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function toggleAdmin(uid, currentRole) {
+  try {
+    await api('/api/users/' + uid + '/role', {method:'PUT', body:{role: currentRole === 'admin' ? 'user' : 'admin'}});
+    toast('Role updated', 'success');
+    renderUsers(await api('/api/users'));
+  } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// ── Change Password (any logged-in user) ──
+document.getElementById('changepw-btn').addEventListener('click', () => {
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
+  document.getElementById('cp-error').style.display = 'none';
+  document.getElementById('changepw-modal').classList.remove('hidden');
+});
+
+async function changePassword() {
+  const cur = document.getElementById('cp-current').value;
+  const np = document.getElementById('cp-new').value;
+  const conf = document.getElementById('cp-confirm').value;
+  const errEl = document.getElementById('cp-error');
+  errEl.style.display = 'none';
+  if (!cur || !np) { errEl.textContent = 'All fields required'; errEl.style.display = 'block'; return; }
+  if (np.length < 6) { errEl.textContent = 'New password must be at least 6 characters'; errEl.style.display = 'block'; return; }
+  if (np !== conf) { errEl.textContent = 'New passwords do not match'; errEl.style.display = 'block'; return; }
+  document.getElementById('cp-save-btn').textContent = 'Updating\u2026';
+  try {
+    await api('/api/auth/change-password', {method:'POST', body:{currentPassword:cur, newPassword:np}});
+    closeModal('changepw-modal');
+    toast('Password updated successfully', 'success');
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  document.getElementById('cp-save-btn').textContent = 'Update Password';
+}
+
+// ── Admin: Reset another user's password ──
+let resetUserId = null;
+function openResetPassword(uid, name) {
+  resetUserId = uid;
+  document.getElementById('rp-username').textContent = name;
+  document.getElementById('rp-new').value = '';
+  document.getElementById('rp-confirm').value = '';
+  document.getElementById('rp-error').style.display = 'none';
+  document.getElementById('resetpw-modal').classList.remove('hidden');
+}
+
+async function adminResetPassword() {
+  const np = document.getElementById('rp-new').value;
+  const conf = document.getElementById('rp-confirm').value;
+  const errEl = document.getElementById('rp-error');
+  errEl.style.display = 'none';
+  if (!np) { errEl.textContent = 'Password required'; errEl.style.display = 'block'; return; }
+  if (np.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.style.display = 'block'; return; }
+  if (np !== conf) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+  document.getElementById('rp-save-btn').textContent = 'Resetting\u2026';
+  try {
+    await api('/api/users/' + resetUserId + '/reset-password', {method:'POST', body:{newPassword:np}});
+    closeModal('resetpw-modal');
+    toast('Password reset successfully', 'success');
+  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+  document.getElementById('rp-save-btn').textContent = 'Reset Password';
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+});
+</script>
+</body>
+</html>

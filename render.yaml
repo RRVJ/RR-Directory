@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: reqroute-directory
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --threads 4
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SECURE_COOKIES
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.12"

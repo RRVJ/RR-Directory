@@ -1,0 +1,4 @@
+.env
+reqroute.db
+__pycache__/
+*.pyc
