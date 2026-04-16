@@ -140,16 +140,19 @@ def init_db():
         );
         CREATE TABLE IF NOT EXISTS employees (
             id TEXT PRIMARY KEY,
+            type TEXT,
             name TEXT NOT NULL,
-            title TEXT,
-            department TEXT,
-            email TEXT,
-            phone TEXT,
-            location TEXT,
-            manager TEXT,
-            employee_id TEXT,
-            start_date TEXT,
+            client TEXT,
+            project TEXT,
             status TEXT DEFAULT 'Active',
+            start_date TEXT,
+            end_date TEXT,
+            vendor_name TEXT,
+            vendor_phone TEXT,
+            vendor_email TEXT,
+            fe_rate_regular TEXT,
+            be_rate_regular TEXT,
+            gross_margin TEXT,
             notes TEXT,
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now')),
@@ -371,12 +374,14 @@ def add_resource():
     eid = str(uuid.uuid4())
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
-    # Auto-calculate gross margin
-    try:
-        bill = float(vals.get('fe_rate_regular') or 0)
-        pay = float(vals.get('be_rate_regular') or 0)
-        vals['gross_margin'] = str(round(bill - pay, 2))
-    except: pass
+    # Auto-calculate gross margin only if not provided
+    if not vals.get('gross_margin'):
+        try:
+            bill = float(vals.get('fe_rate_regular') or 0)
+            pay = float(vals.get('be_rate_regular') or 0)
+            if bill or pay:
+                vals['gross_margin'] = str(round(bill - pay, 2))
+        except: pass
     conn = get_db()
     cols_str = ','.join(RESOURCE_COLS)
     placeholders = ','.join(['?'] * len(RESOURCE_COLS))
@@ -396,11 +401,13 @@ def update_resource(eid):
     if not d.get('name'): return jsonify(error='Name is required'), 400
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
-    try:
-        bill = float(vals.get('fe_rate_regular') or 0)
-        pay = float(vals.get('be_rate_regular') or 0)
-        vals['gross_margin'] = str(round(bill - pay, 2))
-    except: pass
+    if not vals.get('gross_margin'):
+        try:
+            bill = float(vals.get('fe_rate_regular') or 0)
+            pay = float(vals.get('be_rate_regular') or 0)
+            if bill or pay:
+                vals['gross_margin'] = str(round(bill - pay, 2))
+        except: pass
     sets = ','.join([f'{c}=?' for c in RESOURCE_COLS])
     conn = get_db()
     conn.execute(f"UPDATE resources SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
@@ -493,11 +500,14 @@ def import_resources():
     for r in rows:
         if not r.get('name'): continue
         vals = {c: sanitize_str(r.get(c)) for c in RESOURCE_COLS}
-        try:
-            bill = float(vals.get('fe_rate_regular') or 0)
-            pay = float(vals.get('be_rate_regular') or 0)
-            vals['gross_margin'] = str(round(bill - pay, 2))
-        except: pass
+        # Only calculate GM if not already provided in data
+        if not vals.get('gross_margin'):
+            try:
+                bill = float(vals.get('fe_rate_regular') or 0)
+                pay = float(vals.get('be_rate_regular') or 0)
+                if bill or pay:
+                    vals['gross_margin'] = str(round(bill - pay, 2))
+            except: pass
         conn.execute(f'INSERT INTO resources (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
                      [str(uuid.uuid4())] + [vals[c] for c in RESOURCE_COLS] + [uname])
         imported += 1
@@ -508,7 +518,7 @@ def import_resources():
     return jsonify(imported=imported)
 
 # ── Employees CRUD ──
-EMP_COLS = ['name','title','department','email','phone','location','manager','employee_id','start_date','status','notes']
+EMP_COLS = ['type','name','client','project','status','start_date','end_date','vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular','gross_margin','notes']
 
 @app.route('/api/employees')
 def list_employees():
@@ -528,6 +538,13 @@ def add_employee():
     eid = str(uuid.uuid4())
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
+    if not vals.get('gross_margin'):
+        try:
+            bill = float(vals.get('fe_rate_regular') or 0)
+            pay = float(vals.get('be_rate_regular') or 0)
+            if bill or pay:
+                vals['gross_margin'] = str(round(bill - pay, 2))
+        except: pass
     conn = get_db()
     cols_str = ','.join(EMP_COLS)
     placeholders = ','.join(['?'] * len(EMP_COLS))
@@ -547,6 +564,13 @@ def update_employee(eid):
     if not d.get('name'): return jsonify(error='Name is required'), 400
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
+    if not vals.get('gross_margin'):
+        try:
+            bill = float(vals.get('fe_rate_regular') or 0)
+            pay = float(vals.get('be_rate_regular') or 0)
+            if bill or pay:
+                vals['gross_margin'] = str(round(bill - pay, 2))
+        except: pass
     sets = ','.join([f'{c}=?' for c in EMP_COLS])
     conn = get_db()
     conn.execute(f"UPDATE employees SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
@@ -581,6 +605,14 @@ def import_employees():
     for r in rows:
         if not r.get('name'): continue
         vals = {c: sanitize_str(r.get(c)) for c in EMP_COLS}
+        # Only calculate GM if not already provided in data
+        if not vals.get('gross_margin'):
+            try:
+                bill = float(vals.get('fe_rate_regular') or 0)
+                pay = float(vals.get('be_rate_regular') or 0)
+                if bill or pay:
+                    vals['gross_margin'] = str(round(bill - pay, 2))
+            except: pass
         conn.execute(f'INSERT INTO employees (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
                      [str(uuid.uuid4())] + [vals[c] for c in EMP_COLS] + [uname])
         imported += 1
