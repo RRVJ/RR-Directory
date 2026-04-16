@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReqRoute · Detail</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f4f5f7;color:#1a2332;font-size:14px}
+.top-bar{background:#1a2332;color:#fff;padding:0 2rem;height:52px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:12px;letter-spacing:.2px}
+.top-bar .sep{color:#475569;margin:0 6px;font-weight:300}
+.top-bar a{color:#94a3b8;font-size:12px;text-decoration:none;margin-left:auto;border:1px solid rgba(255,255,255,.15);padding:4px 12px;border-radius:5px}
+.top-bar a:hover{background:rgba(255,255,255,.08)}
+.container{max-width:800px;margin:2rem auto;padding:0 1rem}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+.card-header{background:#f8f9fb;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:12px}
+.avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff}
+.card-header h1{font-size:20px;font-weight:600}
+.card-header .badge{font-size:12px;padding:3px 10px;border-radius:4px;font-weight:500}
+.fields{padding:1rem 1.5rem}
+.field-row{display:grid;grid-template-columns:200px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.field-row:last-child{border-bottom:none}
+.field-label{color:#6b7280;font-weight:500}
+.field-value{color:#1a2332}
+.field-value.muted{color:#9ca3af}
+.gm-highlight{background:#d1fae5;color:#065f46;font-weight:600;padding:2px 8px;border-radius:4px;display:inline-block}
+.loading{text-align:center;padding:4rem;color:#9ca3af;font-size:15px}
+.error{text-align:center;padding:4rem;color:#b91c1c}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <span>ReqRoute<span class="sep">|</span>Full Details</span>
+  <a href="/">&#8592; Back to Directory</a>
+</div>
+<div class="container">
+  <div id="content"><div class="loading">Loading...</div></div>
+</div>
+<script>
+const AVATAR_COLORS=['#2563eb','#059669','#d97706','#7c3aed','#db2777','#dc2626','#0891b2'];
+function avatarColor(n){let h=0;for(let i=0;i<(n||'').length;i++)h=(h*31+n.charCodeAt(i))%AVATAR_COLORS.length;return AVATAR_COLORS[h]}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function fmtDate(d){if(!d)return'';try{return new Date(d).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'})}catch{return d}}
+
+const STATUS_COLORS={Open:{bg:'#d1fae5',c:'#065f46'},Active:{bg:'#d1fae5',c:'#065f46'},'On Assignment':{bg:'#dbeafe',c:'#1e40af'},Available:{bg:'#e0f2fe',c:'#0369a1'},Ended:{bg:'#fee2e2',c:'#b91c1c'},Closed:{bg:'#fee2e2',c:'#b91c1c'},'On Leave':{bg:'#fef3c7',c:'#92400e'},Inactive:{bg:'#f3f4f6',c:'#6b7280'}};
+
+const RES_LABELS={counter:'Counter',s_no:'S No',month_added:'Month Added',name:'Name',type_of_hire:'Type of Hire',skill_set:'Skill Set',contractor_phone:'Contractor Phone',contractor_email:'Contractor Email',jc_cats:'JC # - CATS',candidate_cats:'Candidate # - CATS',assignment_no:'Assignment #',start_date:'Start Date',end_date:'End Date',contract_status:'Contract Status',client:'Client',customer:'Customer',client_contact:'Client Contact',client_employee_id:'Client Employee ID',client_po_number:'Client PO Number',client_timesheet_cycle:'Client Timesheet Cycle',client_payment_terms:'Client Payment Terms',invoicing_type:'Invoicing Type',rate_type:'Rate Type',fe_rate_regular:'FE Rate (Regular) $/hr',fe_rate_ot:'FE Rate (OT) $/hr',be_rate_regular:'BE Rate (Regular) $/hr',be_rate_ot:'BE Rate (OT) $/hr',expenses_paid:'Expenses Paid',hc:'HC',hc_cost_month:'HC Cost/Month',per_diem_rate:'Per Diem Rate',gross_margin:'Gross Margin',vendor_name:'Vendor Name',vendor_email:'Vendor Email',vendor_phone:'Vendor Phone',notes:'Notes'};
+
+const EMP_LABELS={name:'Full Name',title:'Job Title',department:'Department',email:'Email',phone:'Phone',location:'Location',manager:'Manager',employee_id:'Employee ID',start_date:'Start Date',status:'Status',notes:'Notes'};
+
+const RES_ORDER=['name','contract_status','type_of_hire','skill_set','start_date','end_date','client','customer','client_contact','client_employee_id','client_po_number','client_timesheet_cycle','client_payment_terms','invoicing_type','rate_type','fe_rate_regular','fe_rate_ot','be_rate_regular','be_rate_ot','gross_margin','expenses_paid','hc','hc_cost_month','per_diem_rate','vendor_name','vendor_email','vendor_phone','contractor_phone','contractor_email','jc_cats','candidate_cats','assignment_no','counter','s_no','month_added','notes'];
+const EMP_ORDER=['name','title','department','email','phone','location','manager','employee_id','start_date','status','notes'];
+
+(async()=>{
+  const params=new URLSearchParams(window.location.search);
+  const type=params.get('type');
+  const id=params.get('id');
+  if(!type||!id){document.getElementById('content').innerHTML='<div class="error">Missing parameters</div>';return}
+
+  try{
+    const r=await fetch(`/api/${type}s/${id}/detail`);
+    if(!r.ok){
+      if(r.status===401){window.location.href='/';return}
+      throw new Error('Not found');
+    }
+    const rec=await r.json();
+    const labels=type==='resource'?RES_LABELS:EMP_LABELS;
+    const order=type==='resource'?RES_ORDER:EMP_ORDER;
+    const statusKey=type==='resource'?'contract_status':'status';
+    const status=rec[statusKey]||'';
+    const sc=STATUS_COLORS[status]||{bg:'#f3f4f6',c:'#6b7280'};
+
+    document.title=`${rec.name} · ReqRoute`;
+
+    let html=`<div class="card">
+      <div class="card-header">
+        <div class="avatar" style="background:${avatarColor(rec.name)}">${initials(rec.name)}</div>
+        <div>
+          <h1>${esc(rec.name)}</h1>
+          <span class="badge" style="background:${sc.bg};color:${sc.c}">${esc(status)}</span>
+          ${type==='resource'&&rec.client?` &middot; ${esc(rec.client)}`:''}
+          ${type==='employee'&&rec.title?` &middot; ${esc(rec.title)}`:''}
+        </div>
+      </div>
+      <div class="fields">`;
+
+    order.forEach(k=>{
+      if(k==='name')return; // already in header
+      const label=labels[k]||k;
+      let val=rec[k]||'';
+      let cls='field-value';
+
+      if(k==='gross_margin'){
+        const bill=parseFloat(rec.fe_rate_regular)||0;
+        const pay=parseFloat(rec.be_rate_regular)||0;
+        const gm=(bill-pay).toFixed(2);
+        html+=`<div class="field-row"><div class="field-label">${label}</div><div class="field-value"><span class="gm-highlight">$${gm}/hr</span></div></div>`;
+        return;
+      }
+      if(k===statusKey){
+        html+=`<div class="field-row"><div class="field-label">${label}</div><div class="field-value"><span class="badge" style="background:${sc.bg};color:${sc.c}">${esc(status)}</span></div></div>`;
+        return;
+      }
+      if((k==='start_date'||k==='end_date')&&val)val=fmtDate(val);
+      if(k.includes('rate')&&val){const n=parseFloat(val);if(!isNaN(n))val='$'+n.toFixed(2);}
+      if(!val)cls+=' muted';
+
+      html+=`<div class="field-row"><div class="field-label">${label}</div><div class="${cls}">${esc(val||'\u2014')}</div></div>`;
+    });
+
+    html+=`</div></div>`;
+    if(rec.updated_at){
+      html+=`<p style="text-align:center;margin-top:1rem;font-size:12px;color:#9ca3af">Last updated: ${fmtDate(rec.updated_at)}${rec.updated_by?' by '+esc(rec.updated_by):''}</p>`;
+    }
+    document.getElementById('content').innerHTML=html;
+  }catch(e){
+    document.getElementById('content').innerHTML=`<div class="error">${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

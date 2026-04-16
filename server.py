@@ -1,15 +1,15 @@
 """
 ReqRoute Directory — Python/Flask backend
-  - SQLite for persistence
-  - SSE for real-time updates across clients
-  - Session-based auth with bcrypt
-  - Security: rate limiting, CSRF protection, secure headers, input validation
+  - SQLite, SSE real-time, session auth, bcrypt
+  - Default accounts: admin/admin@123, user1/user1
+  - No signup — admin-only user management
+  - Full resource columns, simplified internal columns
+  - Gross margin tracking
 """
 
 import os, json, sqlite3, uuid, re, time, threading, queue, secrets, functools
 from pathlib import Path
-from flask import Flask, request, jsonify, session, send_from_directory, Response, abort
-
+from flask import Flask, request, jsonify, session, send_from_directory, Response
 import bcrypt
 
 # ── Load .env ──
@@ -27,19 +27,15 @@ DB_PATH = Path(__file__).parent / 'reqroute.db'
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.secret_key = os.environ.get('SESSION_SECRET', secrets.token_hex(32))
 app.config.update(
-    SESSION_COOKIE_HTTPONLY=True,      # JS can't read session cookie
-    SESSION_COOKIE_SAMESITE='Lax',     # CSRF protection
-    SESSION_COOKIE_SECURE=os.environ.get('SECURE_COOKIES', '') == 'true',  # Set true in production with HTTPS
-    PERMANENT_SESSION_LIFETIME=86400,  # 24 hours
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get('SECURE_COOKIES', '') == 'true',
+    PERMANENT_SESSION_LIFETIME=86400,
 )
 
-# ── Security: Rate Limiter ──
-rate_limit_store = {}  # ip -> {count, window_start}
-RATE_LIMIT_WINDOW = 60   # seconds
-RATE_LIMIT_MAX = 60       # max requests per window for auth endpoints
-RATE_LIMIT_MAX_GENERAL = 200  # for general endpoints
-
-def rate_limit(max_requests=RATE_LIMIT_MAX):
+# ── Rate Limiter ──
+rate_limit_store = {}
+def rate_limit(max_requests=60):
     def decorator(f):
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
@@ -47,17 +43,17 @@ def rate_limit(max_requests=RATE_LIMIT_MAX):
             key = f"{ip}:{f.__name__}"
             now = time.time()
             entry = rate_limit_store.get(key, {'count': 0, 'start': now})
-            if now - entry['start'] > RATE_LIMIT_WINDOW:
+            if now - entry['start'] > 60:
                 entry = {'count': 0, 'start': now}
             entry['count'] += 1
             rate_limit_store[key] = entry
             if entry['count'] > max_requests:
-                return jsonify(error='Too many requests. Please wait a moment.'), 429
+                return jsonify(error='Too many requests. Please wait.'), 429
             return f(*args, **kwargs)
         return wrapped
     return decorator
 
-# ── Security: Headers ──
+# ── Security Headers ──
 @app.after_request
 def set_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -65,37 +61,19 @@ def set_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Content-Security-Policy'] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+        "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data:; "
-        "connect-src 'self'"
+        "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'"
     )
     return response
 
 # ── Input Validation ──
-EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 MAX_FIELD_LEN = 500
 MAX_NOTES_LEN = 5000
-
 def sanitize_str(val, max_len=MAX_FIELD_LEN):
-    if val is None:
-        return None
+    if val is None: return None
     s = str(val).strip()
-    if len(s) > max_len:
-        s = s[:max_len]
-    return s if s else None
-
-def validate_email(email):
-    return bool(email and EMAIL_RE.match(email) and len(email) <= 254)
-
-def validate_password(pw):
-    if not pw or len(pw) < 6:
-        return False, 'Password must be at least 6 characters'
-    if len(pw) > 128:
-        return False, 'Password too long'
-    return True, ''
+    return s[:max_len] if s else None
 
 # ── Database ──
 def get_db():
@@ -110,32 +88,87 @@ def init_db():
     conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
-            email TEXT UNIQUE NOT NULL,
+            username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             display_name TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'user',
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS resources (
+            id TEXT PRIMARY KEY,
+            counter TEXT,
+            s_no TEXT,
+            month_added TEXT,
+            name TEXT NOT NULL,
+            type_of_hire TEXT,
+            skill_set TEXT,
+            contractor_phone TEXT,
+            contractor_email TEXT,
+            jc_cats TEXT,
+            candidate_cats TEXT,
+            assignment_no TEXT,
+            start_date TEXT,
+            end_date TEXT,
+            contract_status TEXT DEFAULT 'Active',
+            client TEXT,
+            customer TEXT,
+            client_contact TEXT,
+            client_employee_id TEXT,
+            client_po_number TEXT,
+            client_timesheet_cycle TEXT,
+            client_payment_terms TEXT,
+            invoicing_type TEXT,
+            rate_type TEXT,
+            fe_rate_regular TEXT,
+            fe_rate_ot TEXT,
+            be_rate_regular TEXT,
+            be_rate_ot TEXT,
+            expenses_paid TEXT,
+            hc TEXT,
+            hc_cost_month TEXT,
+            per_diem_rate TEXT,
+            gross_margin TEXT,
+            vendor_name TEXT,
+            vendor_email TEXT,
+            vendor_phone TEXT,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            updated_by TEXT
+        );
         CREATE TABLE IF NOT EXISTS employees (
             id TEXT PRIMARY KEY,
-            type TEXT NOT NULL DEFAULT 'internal',
             name TEXT NOT NULL,
-            title TEXT, department TEXT, email TEXT, phone TEXT,
-            location TEXT, manager TEXT, employee_id TEXT,
-            start_date TEXT, end_date TEXT,
+            title TEXT,
+            department TEXT,
+            email TEXT,
+            phone TEXT,
+            location TEXT,
+            manager TEXT,
+            employee_id TEXT,
+            start_date TEXT,
             status TEXT DEFAULT 'Active',
-            client_name TEXT, vendor_name TEXT, process_name TEXT,
-            bill_rate TEXT, pay_rate TEXT, recruiter TEXT, notes TEXT,
+            notes TEXT,
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now')),
             updated_by TEXT
         );
     ''')
+    # ── Create default accounts ──
+    existing = conn.execute('SELECT COUNT(*) as cnt FROM users').fetchone()['cnt']
+    if existing == 0:
+        admin_hash = bcrypt.hashpw(b'admin@123', bcrypt.gensalt()).decode('utf-8')
+        user_hash = bcrypt.hashpw(b'user1', bcrypt.gensalt()).decode('utf-8')
+        conn.execute('INSERT INTO users (id,username,password,display_name,role) VALUES (?,?,?,?,?)',
+                     (str(uuid.uuid4()), 'admin', admin_hash, 'Admin', 'admin'))
+        conn.execute('INSERT INTO users (id,username,password,display_name,role) VALUES (?,?,?,?,?)',
+                     (str(uuid.uuid4()), 'user1', user_hash, 'User 1', 'user'))
+        conn.commit()
     conn.close()
 
 init_db()
 
-# ── SSE: Real-time updates ──
+# ── SSE ──
 sse_queues = []
 sse_lock = threading.Lock()
 
@@ -144,20 +177,15 @@ def broadcast(event, data):
     with sse_lock:
         dead = []
         for q in sse_queues:
-            try:
-                q.put_nowait(msg)
-            except queue.Full:
-                dead.append(q)
-        for q in dead:
-            sse_queues.remove(q)
+            try: q.put_nowait(msg)
+            except queue.Full: dead.append(q)
+        for q in dead: sse_queues.remove(q)
 
 @app.route('/api/events')
 def sse_stream():
-    if 'user_id' not in session:
-        return 'Unauthorized', 401
+    if 'user_id' not in session: return 'Unauthorized', 401
     q = queue.Queue(maxsize=50)
-    with sse_lock:
-        sse_queues.append(q)
+    with sse_lock: sse_queues.append(q)
     def generate():
         yield "data: connected\n\n"
         try:
@@ -167,20 +195,16 @@ def sse_stream():
                     yield msg
                 except queue.Empty:
                     yield ": keepalive\n\n"
-        except GeneratorExit:
-            pass
+        except GeneratorExit: pass
         finally:
             with sse_lock:
-                if q in sse_queues:
-                    sse_queues.remove(q)
+                if q in sse_queues: sse_queues.remove(q)
     return Response(generate(), mimetype='text/event-stream',
                     headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
 # ── Auth helpers ──
 def require_auth():
-    if 'user_id' not in session:
-        return None
-    return session['user_id']
+    return session.get('user_id')
 
 def get_user_role(uid):
     conn = get_db()
@@ -194,56 +218,23 @@ def get_display_name(uid):
     conn.close()
     return row['display_name'] if row else 'unknown'
 
-# ── Auth Routes ──
-@app.route('/api/auth/signup', methods=['POST'])
-@rate_limit(max_requests=10)  # Strict: 10 signups/min per IP
-def signup():
-    d = request.json or {}
-    email = sanitize_str(d.get('email', ''), 254)
-    pw = d.get('password', '')
-    name = sanitize_str(d.get('displayName', ''), 100)
-
-    if not email or not validate_email(email):
-        return jsonify(error='Valid email address required'), 400
-    ok, msg = validate_password(pw)
-    if not ok:
-        return jsonify(error=msg), 400
-    if not name:
-        name = email.split('@')[0]
-
-    conn = get_db()
-    if conn.execute('SELECT id FROM users WHERE email=?', (email,)).fetchone():
-        conn.close()
-        return jsonify(error='Email already registered'), 409
-    count = conn.execute('SELECT COUNT(*) as cnt FROM users').fetchone()['cnt']
-    role = 'admin' if count == 0 else 'user'
-    uid = str(uuid.uuid4())
-    hashed = bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    conn.execute('INSERT INTO users (id,email,password,display_name,role) VALUES (?,?,?,?,?)',
-                 (uid, email, hashed, name, role))
-    conn.commit()
-    conn.close()
-    session['user_id'] = uid
-    session.permanent = True
-    return jsonify(id=uid, email=email, displayName=name, role=role, firstUser=(role == 'admin'))
-
+# ── Auth Routes (no signup) ──
 @app.route('/api/auth/login', methods=['POST'])
-@rate_limit(max_requests=15)  # Strict: 15 login attempts/min per IP
+@rate_limit(max_requests=15)
 def login():
     d = request.json or {}
-    email = d.get('email', '').strip()
+    username = d.get('username', '').strip()
     pw = d.get('password', '')
-    if not email or not pw:
-        return jsonify(error='Email and password required'), 400
+    if not username or not pw:
+        return jsonify(error='Username and password required'), 400
     conn = get_db()
-    user = conn.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    user = conn.execute('SELECT * FROM users WHERE username=?', (username,)).fetchone()
     conn.close()
-    # Constant-time comparison — don't reveal which field is wrong
     if not user or not bcrypt.checkpw(pw.encode('utf-8'), user['password'].encode('utf-8')):
-        return jsonify(error='Invalid email or password'), 401
+        return jsonify(error='Invalid username or password'), 401
     session['user_id'] = user['id']
     session.permanent = True
-    return jsonify(id=user['id'], email=user['email'], displayName=user['display_name'], role=user['role'])
+    return jsonify(id=user['id'], username=user['username'], displayName=user['display_name'], role=user['role'])
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
@@ -252,258 +243,325 @@ def logout():
 
 @app.route('/api/auth/me')
 def me():
-    if 'user_id' not in session:
-        return jsonify(error='Not authenticated'), 401
+    if 'user_id' not in session: return jsonify(error='Not authenticated'), 401
     conn = get_db()
-    user = conn.execute('SELECT id,email,display_name,role FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    user = conn.execute('SELECT id,username,display_name,role FROM users WHERE id=?', (session['user_id'],)).fetchone()
     conn.close()
-    if not user:
-        session.clear()
-        return jsonify(error='User not found'), 401
-    return jsonify(id=user['id'], email=user['email'], displayName=user['display_name'], role=user['role'])
+    if not user: session.clear(); return jsonify(error='User not found'), 401
+    return jsonify(id=user['id'], username=user['username'], displayName=user['display_name'], role=user['role'])
 
-# ── Change Password (logged-in user) ──
 @app.route('/api/auth/change-password', methods=['POST'])
 @rate_limit(max_requests=10)
 def change_password():
     uid = require_auth()
-    if not uid:
-        return jsonify(error='Not authenticated'), 401
+    if not uid: return jsonify(error='Not authenticated'), 401
     d = request.json or {}
-    current_pw = d.get('currentPassword', '')
-    new_pw = d.get('newPassword', '')
-    if not current_pw or not new_pw:
-        return jsonify(error='Current and new password required'), 400
-    ok, msg = validate_password(new_pw)
-    if not ok:
-        return jsonify(error=msg), 400
+    cur, new = d.get('currentPassword', ''), d.get('newPassword', '')
+    if not cur or not new or len(new) < 4:
+        return jsonify(error='Password must be at least 4 characters'), 400
     conn = get_db()
     user = conn.execute('SELECT password FROM users WHERE id=?', (uid,)).fetchone()
-    if not user or not bcrypt.checkpw(current_pw.encode('utf-8'), user['password'].encode('utf-8')):
-        conn.close()
-        return jsonify(error='Current password is incorrect'), 401
-    hashed = bcrypt.hashpw(new_pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    if not user or not bcrypt.checkpw(cur.encode('utf-8'), user['password'].encode('utf-8')):
+        conn.close(); return jsonify(error='Current password is incorrect'), 401
+    hashed = bcrypt.hashpw(new.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     conn.execute('UPDATE users SET password=? WHERE id=?', (hashed, uid))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
     return jsonify(ok=True)
 
-# ── Admin: Reset another user's password ──
-@app.route('/api/users/<target_id>/reset-password', methods=['POST'])
+@app.route('/api/users/<tid>/reset-password', methods=['POST'])
 @rate_limit(max_requests=10)
-def admin_reset_password(target_id):
+def admin_reset_password(tid):
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    d = request.json or {}
-    new_pw = d.get('newPassword', '')
-    ok, msg = validate_password(new_pw)
-    if not ok:
-        return jsonify(error=msg), 400
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    new = (request.json or {}).get('newPassword', '')
+    if not new or len(new) < 4: return jsonify(error='Password must be at least 4 characters'), 400
     conn = get_db()
-    target = conn.execute('SELECT id FROM users WHERE id=?', (target_id,)).fetchone()
-    if not target:
-        conn.close()
-        return jsonify(error='User not found'), 404
-    hashed = bcrypt.hashpw(new_pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    conn.execute('UPDATE users SET password=? WHERE id=?', (hashed, target_id))
-    conn.commit()
-    conn.close()
+    hashed = bcrypt.hashpw(new.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    conn.execute('UPDATE users SET password=? WHERE id=?', (hashed, tid))
+    conn.commit(); conn.close()
     return jsonify(ok=True)
+
+# ── Users management ──
+@app.route('/api/users')
+def list_users():
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    conn = get_db()
+    rows = conn.execute('SELECT id,username,display_name,role,created_at FROM users ORDER BY created_at').fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/users', methods=['POST'])
+@rate_limit(max_requests=20)
+def create_user():
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    username = sanitize_str(d.get('username', ''), 50)
+    display_name = sanitize_str(d.get('display_name', ''), 100)
+    password = d.get('password', '')
+    role = d.get('role', 'user')
+    if not username or not password or not display_name:
+        return jsonify(error='Username, display name and password are required'), 400
+    if len(password) < 4:
+        return jsonify(error='Password must be at least 4 characters'), 400
+    if role not in ('admin', 'user'):
+        role = 'user'
+    if not re.match(r'^[a-zA-Z0-9_.-]+$', username):
+        return jsonify(error='Username can only contain letters, numbers, dots, dashes, underscores'), 400
+    conn = get_db()
+    existing = conn.execute('SELECT id FROM users WHERE username=?', (username,)).fetchone()
+    if existing:
+        conn.close()
+        return jsonify(error='Username already exists'), 409
+    new_id = str(uuid.uuid4())
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    conn.execute('INSERT INTO users (id,username,password,display_name,role) VALUES (?,?,?,?,?)',
+                 (new_id, username, hashed, display_name, role))
+    conn.commit(); conn.close()
+    return jsonify(id=new_id, username=username, display_name=display_name, role=role)
+
+@app.route('/api/users/<tid>', methods=['DELETE'])
+def delete_user(tid):
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    if tid == uid: return jsonify(error='Cannot delete yourself'), 400
+    conn = get_db()
+    conn.execute('DELETE FROM users WHERE id=?', (tid,))
+    conn.commit(); conn.close()
+    return jsonify(ok=True)
+
+@app.route('/api/users/<tid>/role', methods=['PUT'])
+def update_role(tid):
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    if tid == uid: return jsonify(error='Cannot change your own role'), 400
+    role = (request.json or {}).get('role', 'user')
+    if role not in ('admin', 'user'): return jsonify(error='Invalid role'), 400
+    conn = get_db()
+    conn.execute('UPDATE users SET role=? WHERE id=?', (role, tid))
+    conn.commit(); conn.close()
+    return jsonify(ok=True)
+
+# ── Resources CRUD ──
+RESOURCE_COLS = ['counter','s_no','month_added','name','type_of_hire','skill_set','contractor_phone',
+    'contractor_email','jc_cats','candidate_cats','assignment_no','start_date','end_date','contract_status',
+    'client','customer','client_contact','client_employee_id','client_po_number','client_timesheet_cycle',
+    'client_payment_terms','invoicing_type','rate_type','fe_rate_regular','fe_rate_ot','be_rate_regular',
+    'be_rate_ot','expenses_paid','hc','hc_cost_month','per_diem_rate','gross_margin','vendor_name',
+    'vendor_email','vendor_phone','notes']
+
+@app.route('/api/resources')
+def list_resources():
+    uid = require_auth()
+    if not uid: return jsonify(error='Not authenticated'), 401
+    conn = get_db()
+    rows = conn.execute('SELECT * FROM resources ORDER BY name ASC').fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/resources', methods=['POST'])
+def add_resource():
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    if not d.get('name'): return jsonify(error='Name is required'), 400
+    eid = str(uuid.uuid4())
+    uname = get_display_name(uid)
+    vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
+    # Auto-calculate gross margin
+    try:
+        bill = float(vals.get('fe_rate_regular') or 0)
+        pay = float(vals.get('be_rate_regular') or 0)
+        vals['gross_margin'] = str(round(bill - pay, 2))
+    except: pass
+    conn = get_db()
+    cols_str = ','.join(RESOURCE_COLS)
+    placeholders = ','.join(['?'] * len(RESOURCE_COLS))
+    conn.execute(f'INSERT INTO resources (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
+                 [eid] + [vals[c] for c in RESOURCE_COLS] + [uname])
+    conn.commit()
+    emp = dict(conn.execute('SELECT * FROM resources WHERE id=?', (eid,)).fetchone())
+    conn.close()
+    broadcast('data-change', {'action': 'add', 'type': 'resource', 'record': emp})
+    return jsonify(emp)
+
+@app.route('/api/resources/<eid>', methods=['PUT'])
+def update_resource(eid):
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    if not d.get('name'): return jsonify(error='Name is required'), 400
+    uname = get_display_name(uid)
+    vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
+    try:
+        bill = float(vals.get('fe_rate_regular') or 0)
+        pay = float(vals.get('be_rate_regular') or 0)
+        vals['gross_margin'] = str(round(bill - pay, 2))
+    except: pass
+    sets = ','.join([f'{c}=?' for c in RESOURCE_COLS])
+    conn = get_db()
+    conn.execute(f"UPDATE resources SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
+                 [vals[c] for c in RESOURCE_COLS] + [uname, eid])
+    conn.commit()
+    emp = dict(conn.execute('SELECT * FROM resources WHERE id=?', (eid,)).fetchone())
+    conn.close()
+    broadcast('data-change', {'action': 'update', 'type': 'resource', 'record': emp})
+    return jsonify(emp)
+
+@app.route('/api/resources/<eid>', methods=['DELETE'])
+def delete_resource(eid):
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    conn = get_db()
+    conn.execute('DELETE FROM resources WHERE id=?', (eid,))
+    conn.commit(); conn.close()
+    broadcast('data-change', {'action': 'delete', 'type': 'resource', 'id': eid})
+    return jsonify(ok=True)
+
+@app.route('/api/resources/import', methods=['POST'])
+def import_resources():
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    rows = d.get('rows', [])
+    if len(rows) > 5000: return jsonify(error='Max 5000 rows'), 400
+    uname = get_display_name(uid)
+    conn = get_db()
+    cols_str = ','.join(RESOURCE_COLS)
+    placeholders = ','.join(['?'] * len(RESOURCE_COLS))
+    imported = 0
+    for r in rows:
+        if not r.get('name'): continue
+        vals = {c: sanitize_str(r.get(c)) for c in RESOURCE_COLS}
+        try:
+            bill = float(vals.get('fe_rate_regular') or 0)
+            pay = float(vals.get('be_rate_regular') or 0)
+            vals['gross_margin'] = str(round(bill - pay, 2))
+        except: pass
+        conn.execute(f'INSERT INTO resources (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
+                     [str(uuid.uuid4())] + [vals[c] for c in RESOURCE_COLS] + [uname])
+        imported += 1
+    conn.commit()
+    all_res = [dict(r) for r in conn.execute('SELECT * FROM resources ORDER BY name').fetchall()]
+    conn.close()
+    broadcast('data-change', {'action': 'reload', 'type': 'resource', 'records': all_res})
+    return jsonify(imported=imported)
 
 # ── Employees CRUD ──
-VALID_TYPES = {'internal', 'resources'}
-VALID_STATUSES_INT = {'Active', 'On Leave', 'Inactive'}
-VALID_STATUSES_RES = {'Active', 'On Assignment', 'Available', 'Ended'}
-
-def sanitize_employee(d):
-    """Sanitize and validate employee input data."""
-    emp_type = d.get('type', 'internal')
-    if emp_type not in VALID_TYPES:
-        emp_type = 'internal'
-    status = sanitize_str(d.get('status'))
-    valid_statuses = VALID_STATUSES_RES if emp_type == 'resources' else VALID_STATUSES_INT
-    if status and status not in valid_statuses:
-        status = 'Active'
-    return {
-        'type': emp_type,
-        'name': sanitize_str(d.get('name')),
-        'title': sanitize_str(d.get('title')),
-        'department': sanitize_str(d.get('department')),
-        'email': sanitize_str(d.get('email'), 254),
-        'phone': sanitize_str(d.get('phone'), 30),
-        'location': sanitize_str(d.get('location')),
-        'manager': sanitize_str(d.get('manager')),
-        'employeeId': sanitize_str(d.get('employeeId'), 50),
-        'startDate': sanitize_str(d.get('startDate'), 20),
-        'endDate': sanitize_str(d.get('endDate'), 20),
-        'status': status or 'Active',
-        'clientName': sanitize_str(d.get('clientName')),
-        'vendorName': sanitize_str(d.get('vendorName')),
-        'processName': sanitize_str(d.get('processName')),
-        'billRate': sanitize_str(d.get('billRate'), 20),
-        'payRate': sanitize_str(d.get('payRate'), 20),
-        'recruiter': sanitize_str(d.get('recruiter')),
-        'notes': sanitize_str(d.get('notes'), MAX_NOTES_LEN),
-    }
+EMP_COLS = ['name','title','department','email','phone','location','manager','employee_id','start_date','status','notes']
 
 @app.route('/api/employees')
-@rate_limit(max_requests=RATE_LIMIT_MAX_GENERAL)
 def list_employees():
     uid = require_auth()
-    if not uid:
-        return jsonify(error='Not authenticated'), 401
+    if not uid: return jsonify(error='Not authenticated'), 401
     conn = get_db()
     rows = conn.execute('SELECT * FROM employees ORDER BY name ASC').fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
 
 @app.route('/api/employees', methods=['POST'])
-@rate_limit(max_requests=60)
 def add_employee():
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    d = sanitize_employee(request.json or {})
-    if not d['name']:
-        return jsonify(error='Name is required'), 400
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    if not d.get('name'): return jsonify(error='Name is required'), 400
     eid = str(uuid.uuid4())
     uname = get_display_name(uid)
+    vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
     conn = get_db()
-    conn.execute('''INSERT INTO employees (id,type,name,title,department,email,phone,location,manager,
-        employee_id,start_date,end_date,status,client_name,vendor_name,process_name,bill_rate,pay_rate,
-        recruiter,notes,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-        (eid, d['type'], d['name'], d['title'], d['department'], d['email'], d['phone'],
-         d['location'], d['manager'], d['employeeId'], d['startDate'], d['endDate'],
-         d['status'], d['clientName'], d['vendorName'], d['processName'],
-         d['billRate'], d['payRate'], d['recruiter'], d['notes'], uname))
+    cols_str = ','.join(EMP_COLS)
+    placeholders = ','.join(['?'] * len(EMP_COLS))
+    conn.execute(f'INSERT INTO employees (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
+                 [eid] + [vals[c] for c in EMP_COLS] + [uname])
     conn.commit()
     emp = dict(conn.execute('SELECT * FROM employees WHERE id=?', (eid,)).fetchone())
     conn.close()
-    broadcast('employee-change', {'action': 'add', 'employee': emp})
+    broadcast('data-change', {'action': 'add', 'type': 'employee', 'record': emp})
     return jsonify(emp)
 
 @app.route('/api/employees/<eid>', methods=['PUT'])
-@rate_limit(max_requests=60)
 def update_employee(eid):
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    # Validate UUID format
-    try:
-        uuid.UUID(eid)
-    except ValueError:
-        return jsonify(error='Invalid ID'), 400
-    d = sanitize_employee(request.json or {})
-    if not d['name']:
-        return jsonify(error='Name is required'), 400
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    if not d.get('name'): return jsonify(error='Name is required'), 400
     uname = get_display_name(uid)
+    vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
+    sets = ','.join([f'{c}=?' for c in EMP_COLS])
     conn = get_db()
-    existing = conn.execute('SELECT id FROM employees WHERE id=?', (eid,)).fetchone()
-    if not existing:
-        conn.close()
-        return jsonify(error='Record not found'), 404
-    conn.execute('''UPDATE employees SET name=?,title=?,department=?,email=?,phone=?,location=?,manager=?,
-        employee_id=?,start_date=?,end_date=?,status=?,client_name=?,vendor_name=?,process_name=?,
-        bill_rate=?,pay_rate=?,recruiter=?,notes=?,updated_at=datetime('now'),updated_by=? WHERE id=?''',
-        (d['name'], d['title'], d['department'], d['email'], d['phone'],
-         d['location'], d['manager'], d['employeeId'], d['startDate'], d['endDate'],
-         d['status'], d['clientName'], d['vendorName'], d['processName'],
-         d['billRate'], d['payRate'], d['recruiter'], d['notes'], uname, eid))
+    conn.execute(f"UPDATE employees SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
+                 [vals[c] for c in EMP_COLS] + [uname, eid])
     conn.commit()
     emp = dict(conn.execute('SELECT * FROM employees WHERE id=?', (eid,)).fetchone())
     conn.close()
-    broadcast('employee-change', {'action': 'update', 'employee': emp})
+    broadcast('data-change', {'action': 'update', 'type': 'employee', 'record': emp})
     return jsonify(emp)
 
 @app.route('/api/employees/<eid>', methods=['DELETE'])
-@rate_limit(max_requests=30)
 def delete_employee(eid):
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    try:
-        uuid.UUID(eid)
-    except ValueError:
-        return jsonify(error='Invalid ID'), 400
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
     conn = get_db()
     conn.execute('DELETE FROM employees WHERE id=?', (eid,))
-    conn.commit()
-    conn.close()
-    broadcast('employee-change', {'action': 'delete', 'id': eid})
+    conn.commit(); conn.close()
+    broadcast('data-change', {'action': 'delete', 'type': 'employee', 'id': eid})
     return jsonify(ok=True)
 
 @app.route('/api/employees/import', methods=['POST'])
-@rate_limit(max_requests=10)
 def import_employees():
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    d = request.json or {}
-    rows = d.get('rows', [])
-    if len(rows) > 5000:
-        return jsonify(error='Maximum 5000 rows per import'), 400
-    emp_type = d.get('type', 'internal')
-    if emp_type not in VALID_TYPES:
-        emp_type = 'internal'
+    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
+    rows = (request.json or {}).get('rows', [])
+    if len(rows) > 5000: return jsonify(error='Max 5000 rows'), 400
     uname = get_display_name(uid)
     conn = get_db()
+    cols_str = ','.join(EMP_COLS)
+    placeholders = ','.join(['?'] * len(EMP_COLS))
     imported = 0
     for r in rows:
-        clean = sanitize_employee({**r, 'type': emp_type})
-        if not clean['name']:
-            continue
-        conn.execute('''INSERT INTO employees (id,type,name,title,department,email,phone,location,manager,
-            employee_id,start_date,end_date,status,client_name,vendor_name,process_name,bill_rate,pay_rate,
-            recruiter,notes,updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-            (str(uuid.uuid4()), clean['type'], clean['name'], clean['title'], clean['department'],
-             clean['email'], clean['phone'], clean['location'], clean['manager'], clean['employeeId'],
-             clean['startDate'], clean['endDate'], clean['status'], clean['clientName'],
-             clean['vendorName'], clean['processName'], clean['billRate'], clean['payRate'],
-             clean['recruiter'], clean['notes'], uname))
+        if not r.get('name'): continue
+        vals = {c: sanitize_str(r.get(c)) for c in EMP_COLS}
+        conn.execute(f'INSERT INTO employees (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
+                     [str(uuid.uuid4())] + [vals[c] for c in EMP_COLS] + [uname])
         imported += 1
     conn.commit()
-    all_emps = [dict(r) for r in conn.execute('SELECT * FROM employees ORDER BY name ASC').fetchall()]
+    all_emps = [dict(r) for r in conn.execute('SELECT * FROM employees ORDER BY name').fetchall()]
     conn.close()
-    broadcast('employee-change', {'action': 'reload', 'employees': all_emps})
+    broadcast('data-change', {'action': 'reload', 'type': 'employee', 'records': all_emps})
     return jsonify(imported=imported)
 
-# ── Users management (admin only) ──
-@app.route('/api/users')
-@rate_limit(max_requests=30)
-def list_users():
+# ── Detail API (for new-tab view) ──
+@app.route('/api/resources/<eid>/detail')
+def resource_detail(eid):
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
+    if not uid: return jsonify(error='Not authenticated'), 401
     conn = get_db()
-    rows = conn.execute('SELECT id,email,display_name,role,created_at FROM users ORDER BY created_at ASC').fetchall()
+    row = conn.execute('SELECT * FROM resources WHERE id=?', (eid,)).fetchone()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    if not row: return jsonify(error='Not found'), 404
+    return jsonify(dict(row))
 
-@app.route('/api/users/<target_id>/role', methods=['PUT'])
-@rate_limit(max_requests=20)
-def update_role(target_id):
+@app.route('/api/employees/<eid>/detail')
+def employee_detail(eid):
     uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin':
-        return jsonify(error='Admin access required'), 403
-    if target_id == uid:
-        return jsonify(error='Cannot change your own role'), 400
-    role = request.json.get('role', 'user')
-    if role not in ('admin', 'user'):
-        return jsonify(error='Invalid role'), 400
+    if not uid: return jsonify(error='Not authenticated'), 401
     conn = get_db()
-    conn.execute('UPDATE users SET role=? WHERE id=?', (role, target_id))
-    conn.commit()
+    row = conn.execute('SELECT * FROM employees WHERE id=?', (eid,)).fetchone()
     conn.close()
-    return jsonify(ok=True)
+    if not row: return jsonify(error='Not found'), 404
+    return jsonify(dict(row))
 
 # ── Serve frontend ──
 @app.route('/')
 def index():
     return send_from_directory('public', 'index.html')
 
+@app.route('/detail')
+def detail_page():
+    return send_from_directory('public', 'detail.html')
+
 if __name__ == '__main__':
-    print(f'\n  ReqRoute Directory running at http://localhost:{PORT}\n')
-    print(f'  Share this URL on your local network for others to access.')
-    print(f'  First user to sign up gets admin access.\n')
+    print(f'\n  ReqRoute Directory running at http://localhost:{PORT}')
+    print(f'  Default accounts: admin/admin@123, user1/user1\n')
     app.run(host='0.0.0.0', port=PORT, debug=False, threaded=True)

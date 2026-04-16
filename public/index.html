@@ -18,6 +18,8 @@ button.primary:hover{background:#2d3b4e}
 button.danger{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
 button.danger:hover{background:#fecaca}
 button.sm{padding:4px 10px;font-size:13px}
+button.ghost{background:transparent;border:none;color:#6b7280;padding:4px 8px}
+button.ghost:hover{color:#1a2332;background:#f0f0f0}
 input,select,textarea{width:100%;border:1px solid #d0d5dd;border-radius:6px;padding:8px 10px;background:#fff;transition:.15s}
 input:focus,select:focus,textarea:focus{border-color:#1a2332;box-shadow:0 0 0 3px rgba(26,35,50,.08)}
 .hidden{display:none!important}
@@ -29,19 +31,28 @@ input:focus,select:focus,textarea:focus{border-color:#1a2332;box-shadow:0 0 0 3p
 .auth-box h2{font-size:18px;font-weight:500;margin-bottom:1.5rem}
 .field{margin-bottom:1rem}
 .field label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
-.auth-footer{text-align:center;margin-top:1.25rem;font-size:13px;color:#6b7280}
-.auth-footer a{color:#1a2332;font-weight:500;cursor:pointer}
 .error-msg{color:#b91c1c;font-size:13px;margin-top:.75rem;padding:8px 10px;background:#fee2e2;border-radius:6px;display:none}
 
-header{background:#1a2332;color:#fff;padding:0 1.5rem;display:flex;align-items:center;height:54px;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.logo{font-size:16px;font-weight:600;letter-spacing:-.3px;flex:1}
-.logo span{color:#93c5fd}
-header .badge{background:rgba(255,255,255,.12);font-size:11px;padding:3px 8px;border-radius:4px;color:#e2e8f0}
-header .user-info{font-size:13px;color:#cbd5e1;display:flex;align-items:center;gap:8px}
-header button{background:transparent;border:1px solid rgba(255,255,255,.2);color:#e2e8f0;font-size:13px;padding:5px 12px;border-radius:6px}
-header button:hover{background:rgba(255,255,255,.1)}
+.refresh-bar{background:linear-gradient(90deg,#1e3a5f,#1a2332);color:#fff;padding:6px 1.5rem;display:flex;align-items:center;justify-content:space-between;font-size:13px;position:sticky;top:0;z-index:101}
+.refresh-bar .timer{display:flex;align-items:center;gap:8px}
+.refresh-bar .progress-wrap{width:200px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden}
+.refresh-bar .progress-fill{height:100%;background:#60a5fa;border-radius:2px;transition:width 1s linear}
+.refresh-bar button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:12px;padding:3px 10px;border-radius:4px}
+.refresh-bar button:hover{background:rgba(255,255,255,.25)}
 
-main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
+header{background:#1a2332;color:#fff;padding:0 2rem;display:flex;align-items:center;height:52px;gap:1.25rem;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.logo{font-size:15px;font-weight:600;letter-spacing:.2px;flex:1;white-space:nowrap}
+.logo .sep{color:#475569;margin:0 6px;font-weight:300}
+header .badge{background:rgba(255,255,255,.1);font-size:10px;padding:2px 8px;border-radius:3px;color:#cbd5e1;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+header .user-info{font-size:13px;color:#94a3b8;display:flex;align-items:center;gap:8px}
+header button{background:transparent;border:1px solid rgba(255,255,255,.15);color:#cbd5e1;font-size:12px;padding:4px 12px;border-radius:5px}
+header button:hover{background:rgba(255,255,255,.08)}
+
+main{max-width:1400px;margin:0 auto;padding:1.5rem 1rem}
+
+/* THIN GM STRIP */
+.gm-strip{background:#065f46;color:#fff;border-radius:6px;padding:6px 14px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
+.gm-strip .gm-amount{font-size:15px;font-weight:700;letter-spacing:-.2px}
 
 .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
 .stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.875rem 1rem}
@@ -49,98 +60,135 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
 .stat-val{font-size:24px;font-weight:600;color:#1a2332}
 .stat-sub{font-size:11px;color:#9ca3af;margin-top:2px}
 
-.tabs{display:flex;gap:0;border-bottom:1px solid #e5e7eb;margin-bottom:1.25rem}
+.tabs{display:flex;gap:0;border-bottom:1px solid #e5e7eb;margin-bottom:.75rem}
 .tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 20px;font-size:14px;color:#6b7280;margin-bottom:-1px;font-weight:400}
 .tab-btn.active{border-bottom-color:#1a2332;color:#1a2332;font-weight:500}
 
-.toolbar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.toolbar{display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center}
 .toolbar input{flex:1;min-width:180px}
 .toolbar select{width:auto;min-width:130px}
 
-.list-header{display:grid;gap:8px;padding:6px 1rem;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb;margin-bottom:4px;cursor:pointer}
-.list-header span{display:flex;align-items:center;gap:4px;user-select:none}
-.list-header span:hover{color:#374151}
-.sort-icon{font-size:10px;opacity:.5}
-.sort-icon.active{opacity:1;color:#1a2332}
-.list-internal .list-header,.list-internal .employee-row{grid-template-columns:2fr 1.5fr 1fr 1.2fr 1fr .8fr 60px}
-.list-resources .list-header,.list-resources .employee-row{grid-template-columns:2fr 1.5fr 1fr 1fr 1.2fr .8fr .8fr 60px}
+/* DATA TABLE */
+.data-table-wrap{overflow-x:auto;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table thead th{background:#f8f9fb;padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:2;cursor:default}
+.data-table thead .filter-row th{background:#fff;padding:3px 4px;border-bottom:1px solid #e5e7eb;position:sticky;top:28px;z-index:1}
+.data-table thead .filter-row select{font-size:11px;padding:2px 4px;border-radius:4px;width:100%;min-width:60px;color:#374151}
+.data-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;color:#374151;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.data-table tbody tr{transition:.1s}
+.data-table tbody tr:hover{background:#f8fafd}
+.name-link{color:#1d4ed8;text-decoration:none;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.name-link:hover{text-decoration:underline;color:#1e40af}
 
-.employee-row{display:grid;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 1rem;margin-bottom:6px;align-items:center;transition:.15s;cursor:pointer}
-.employee-row:hover{border-color:#94a3b8;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.emp-name{font-weight:500;color:#1a2332;display:flex;align-items:center;gap:8px}
-.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:#fff}
-.emp-cell{color:#374151;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.emp-cell.muted{color:#9ca3af}
-.status-badge{font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500;white-space:nowrap;display:inline-block}
-.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+/* Quick-info popup */
+.qi-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:210;display:flex;align-items:center;justify-content:center;padding:1rem}
+.qi-card{background:#fff;border-radius:12px;width:100%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,.2);overflow:hidden}
+.qi-header{background:#f8f9fb;padding:1rem 1.25rem;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px}
+.qi-header .avatar{width:36px;height:36px;font-size:13px}
+.qi-header h3{font-size:15px;font-weight:600;flex:1}
+.qi-header .close-qi{background:transparent;border:none;font-size:18px;color:#9ca3af;cursor:pointer;padding:0 4px}
+.qi-header .close-qi:hover{color:#374151}
+.qi-body{padding:1rem 1.25rem}
+.qi-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.qi-row:last-child{border-bottom:none}
+.qi-row .qi-label{color:#6b7280;font-weight:500}
+.qi-row .qi-val{color:#1a2332;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.qi-footer{padding:.75rem 1.25rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px}
+.qi-footer a{display:inline-flex;align-items:center;gap:4px;background:#1a2332;color:#fff;padding:6px 14px;border-radius:6px;font-size:13px;text-decoration:none;font-weight:500}
+.qi-footer a:hover{background:#2d3b4e}
+.avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;color:#fff}
+.status-badge{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:500;white-space:nowrap;display:inline-block}
+.gm-cell{font-weight:600;color:#065f46}
+td.muted{color:#9ca3af}
+
+/* GM Analysis tab */
+.gm-analysis{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:1.25rem}
+.gm-month-selector{display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
+.gm-month-selector select{width:auto;min-width:150px}
+.gm-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1rem}
+.gm-sum-card{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.75rem 1rem;text-align:center}
+.gm-sum-card .val{font-size:22px;font-weight:700;color:#065f46}
+.gm-sum-card .lbl{font-size:11px;color:#6b7280;margin-top:2px}
+
+.col-toggle-wrap{position:relative}
+.col-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:.5rem 0;z-index:50;min-width:220px;max-height:320px;overflow-y:auto;display:none}
+.col-dropdown.open{display:block}
+.col-dropdown label{display:flex;align-items:center;gap:8px;padding:5px 14px;font-size:13px;cursor:pointer;white-space:nowrap}
+.col-dropdown label:hover{background:#f4f5f7}
+.col-dropdown input[type=checkbox]{width:auto;margin:0}
+
+.export-wrap{position:relative}
+.export-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:.35rem 0;z-index:50;min-width:180px;display:none}
+.export-dropdown.open{display:block}
+.export-dropdown button{display:block;width:100%;text-align:left;border:none;border-radius:0;padding:7px 14px;font-size:13px}
+.export-dropdown button:hover{background:#f4f5f7}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
 .modal{background:#fff;border-radius:14px;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
-.modal-lg{max-width:700px}
+.modal-lg{max-width:750px}
 .modal h2{font-size:16px;font-weight:500;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
 .modal h2 .close-btn{background:transparent;border:none;font-size:20px;color:#9ca3af;padding:0 4px;line-height:1}
 .modal h2 .close-btn:hover{color:#374151}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.875rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
 .form-full{grid-column:1/-1}
 .modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:8px}
 .modal-footer .right{display:flex;gap:8px}
 
-.drop-zone{border:2px dashed #d0d5dd;border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:.15s;margin-bottom:1rem}
+.drop-zone{border:2px dashed #d0d5dd;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:.15s;margin-bottom:1rem}
 .drop-zone:hover,.drop-zone.drag{border-color:#1a2332;background:#f8f9fb}
-.drop-zone p{color:#6b7280;font-size:14px;margin-top:.5rem}
-.preview-table-wrap{overflow-x:auto;max-height:260px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:1rem}
-.preview-table{width:100%;border-collapse:collapse;font-size:13px}
-.preview-table th{background:#f4f5f7;padding:7px 10px;text-align:left;border-bottom:1px solid #e5e7eb;font-weight:500;white-space:nowrap;position:sticky;top:0}
-.preview-table td{padding:6px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
-.col-map{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:.5rem;font-size:13px}
-.col-map select{padding:5px 8px}
+.preview-table-wrap{overflow-x:auto;max-height:220px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:1rem}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px}
+.preview-table th{background:#f4f5f7;padding:5px 8px;text-align:left;border-bottom:1px solid #e5e7eb;font-weight:500;white-space:nowrap;position:sticky;top:0}
+.preview-table td{padding:4px 8px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+.col-map{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:.4rem;font-size:12px}
 
 .user-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0}
 .user-row:last-child{border-bottom:none}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#374151;flex-shrink:0}
 .user-info-row{flex:1;min-width:0}
-.user-name{font-weight:500;font-size:14px;color:#1a2332}
+.user-name{font-weight:500;font-size:14px}
 .user-email{font-size:12px;color:#9ca3af}
 
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1a2332;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:.3s;pointer-events:none;max-width:300px}
-.toast.show{opacity:1}
-.toast.success{background:#065f46}
-.toast.error{background:#b91c1c}
-
+.toast.show{opacity:1}.toast.success{background:#065f46}.toast.error{background:#b91c1c}
 .empty-state{text-align:center;padding:3rem;color:#9ca3af;font-size:14px}
 
-@media(max-width:700px){
+@media(max-width:900px){
 .stats-grid{grid-template-columns:1fr 1fr}
-.list-internal .list-header,.list-resources .list-header{display:none}
-.list-internal .employee-row,.list-resources .employee-row{grid-template-columns:1fr;padding:.75rem 1rem}
-.form-grid{grid-template-columns:1fr}
+.gm-summary{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">ReqRoute</div>
     <div class="auth-sub">Employee &amp; Resource Directory</div>
-    <h2 id="auth-heading">Sign in to your account</h2>
-    <div class="field"><label>Email address</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email"></div>
-    <div class="field"><label>Password</label><input type="password" id="auth-password" placeholder="Password" autocomplete="current-password"></div>
-    <div id="auth-name-field" class="field hidden"><label>Full Name</label><input type="text" id="auth-name" placeholder="Your name"></div>
+    <h2>Sign in to your account</h2>
+    <div class="field"><label>Username</label><input type="text" id="auth-user" placeholder="Username" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="auth-pw" placeholder="Password" autocomplete="current-password"></div>
     <button class="primary" id="auth-btn" style="width:100%;margin-top:.25rem">Sign In</button>
     <div id="auth-error" class="error-msg"></div>
-    <div class="auth-footer">
-      <span id="auth-toggle-text">Don't have an account?</span>
-      <a id="auth-toggle"> Sign up</a>
-    </div>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- APP -->
 <div id="app" class="hidden">
+  <div class="refresh-bar" id="refresh-bar">
+    <div class="timer">
+      <span>Auto-refresh in <strong id="rf-time">14:00</strong></span>
+      <div class="progress-wrap"><div class="progress-fill" id="rf-progress" style="width:100%"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="rf-last" style="opacity:.7;font-size:11px"></span>
+      <button onclick="refreshNow()">Refresh Now</button>
+    </div>
+  </div>
+
   <header>
-    <div class="logo">ReqRoute <span>&middot;</span> Directory</div>
+    <div class="logo">ReqRoute<span class="sep">|</span>Directory</div>
     <div class="user-info">
       <span id="header-name"></span>
       <span id="admin-badge" class="badge hidden">Admin</span>
@@ -159,42 +207,51 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="internal">Internal Employees <span id="tab-int-count"></span></button>
-      <button class="tab-btn" data-tab="resources">Resources / Contractors <span id="tab-res-count"></span></button>
+      <button class="tab-btn active" data-tab="resources">Resources <span id="tab-res-count"></span></button>
+      <button class="tab-btn" data-tab="employees">Employees <span id="tab-int-count"></span></button>
+      <button class="tab-btn" data-tab="gm-analysis">Gross Margin</button>
     </div>
 
-    <div class="toolbar">
-      <input type="search" id="search-input" placeholder="Search name, title, client, email...">
+    <!-- Thin GM strip — resources tab only -->
+    <div class="gm-strip" id="gm-strip">
+      Gross Margin: <span class="gm-amount" id="gm-total">$0.00</span>
+      <span style="opacity:.7;font-size:11px" id="gm-detail">(0 active resources)</span>
+    </div>
+
+    <!-- Toolbar — hidden on gm-analysis tab -->
+    <div class="toolbar" id="toolbar">
+      <input type="search" id="search-input" placeholder="Search name, client, vendor, status...">
       <select id="filter-status"><option value="">All Status</option></select>
-      <select id="sort-field">
-        <option value="name">Sort: Name</option>
-        <option value="title">Sort: Title</option>
-        <option value="start_date">Sort: Start Date</option>
-        <option value="status">Sort: Status</option>
-        <option value="client_name">Sort: Client</option>
-        <option value="department">Sort: Department</option>
-      </select>
+      <select id="sort-field"><option value="name">Sort: Name</option></select>
       <select id="sort-dir"><option value="asc">A &rarr; Z</option><option value="desc">Z &rarr; A</option></select>
-      <button id="import-btn" class="admin-only hidden">Import Excel/CSV</button>
-      <button id="export-btn">Export Excel</button>
-      <button id="add-btn" class="primary admin-only hidden">+ Add</button>
+      <div class="col-toggle-wrap">
+        <button id="col-toggle-btn" class="sm" onclick="toggleColDropdown()">&#9881; Columns</button>
+        <div class="col-dropdown" id="col-dropdown"></div>
+      </div>
+      <button id="import-btn" class="sm admin-only hidden">Import Excel/CSV</button>
+      <div class="export-wrap">
+        <button id="export-btn" class="sm" onclick="toggleExportDropdown()">Export &#9662;</button>
+        <div class="export-dropdown" id="export-dropdown">
+          <button onclick="doExport('view')">Current View</button>
+          <button onclick="doExport('all')">All Fields</button>
+        </div>
+      </div>
+      <button id="add-btn" class="primary sm admin-only hidden">+ Add</button>
     </div>
 
-    <div id="employee-list"></div>
+    <div id="data-list"></div>
+    <div id="gm-view" class="hidden"></div>
   </main>
 </div>
 
 <!-- ADD/EDIT MODAL -->
 <div id="emp-modal" class="modal-overlay hidden">
-  <div class="modal">
-    <h2><span id="modal-title">Add Employee</span><button class="close-btn" onclick="closeModal('emp-modal')">&#215;</button></h2>
+  <div class="modal modal-lg">
+    <h2><span id="modal-title">Add</span><button class="close-btn" onclick="closeModal('emp-modal')">&#215;</button></h2>
     <div id="modal-form-fields"></div>
     <div class="modal-footer">
       <button class="danger sm" id="delete-btn" onclick="confirmDelete()">Delete</button>
-      <div class="right">
-        <button onclick="closeModal('emp-modal')">Cancel</button>
-        <button class="primary" id="save-btn" onclick="saveEmployee()">Save</button>
-      </div>
+      <div class="right"><button onclick="closeModal('emp-modal')">Cancel</button><button class="primary" id="save-btn" onclick="saveRecord()">Save</button></div>
     </div>
   </div>
 </div>
@@ -203,23 +260,17 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
 <div id="import-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <h2>Import from Excel / CSV<button class="close-btn" onclick="closeModal('import-modal')">&#215;</button></h2>
-    <div id="import-content">
-      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <div style="font-size:28px">&#128194;</div>
-        <strong>Click to choose file</strong>
-        <p>Supports .xlsx, .xls, .csv &mdash; drop here or click to browse</p>
-      </div>
-      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
-      <div id="import-preview" class="hidden">
-        <div id="col-mapping"></div>
-        <div class="preview-table-wrap"><table class="preview-table" id="preview-table"></table></div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span id="preview-count" style="font-size:13px;color:#6b7280"></span>
-          <div style="display:flex;gap:8px">
-            <button onclick="resetImport()">Choose different file</button>
-            <button class="primary" onclick="runImport()">Import all rows</button>
-          </div>
-        </div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:.75rem">Upload a file to add or update records. Columns will be auto-mapped where possible.</p>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div style="font-size:24px">&#128194;</div><strong>Click to choose file</strong><p style="color:#6b7280;font-size:13px;margin-top:.25rem">.xlsx, .xls, .csv</p>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
+    <div id="import-preview" class="hidden">
+      <div id="col-mapping"></div>
+      <div class="preview-table-wrap" id="preview-wrap"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span id="preview-count" style="font-size:13px;color:#6b7280"></span>
+        <div style="display:flex;gap:8px"><button onclick="resetImport()">Different file</button><button class="primary" onclick="runImport()">Import all rows</button></div>
       </div>
     </div>
   </div>
@@ -228,50 +279,55 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
 <!-- USERS MODAL -->
 <div id="users-modal" class="modal-overlay hidden">
   <div class="modal">
-    <h2>Manage Users <span style="font-size:13px;font-weight:400;color:#9ca3af" id="user-count"></span><button class="close-btn" onclick="closeModal('users-modal')">&#215;</button></h2>
-    <p style="font-size:13px;color:#6b7280;margin-bottom:1rem">Users appear here after they sign up. Toggle admin access below.</p>
+    <h2>Manage Users <span style="font-size:13px;color:#9ca3af" id="user-count"></span><button class="close-btn" onclick="closeModal('users-modal')">&#215;</button></h2>
+    <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid #e5e7eb">
+      <div style="font-size:13px;font-weight:500;margin-bottom:.5rem">Add New User</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+        <input type="text" id="nu-username" placeholder="Username">
+        <input type="text" id="nu-display" placeholder="Display Name">
+        <input type="password" id="nu-password" placeholder="Password">
+        <select id="nu-role" style="width:100%"><option value="user">User</option><option value="admin">Admin</option></select>
+      </div>
+      <button class="primary sm" style="margin-top:.5rem" onclick="createUser()">Create Account</button>
+    </div>
     <div id="users-list"></div>
   </div>
 </div>
 
-<!-- DELETE CONFIRM -->
+<!-- DELETE / CHANGE PW / RESET PW -->
 <div id="del-modal" class="modal-overlay hidden">
-  <div class="modal" style="max-width:360px">
-    <h2>Delete record?<button class="close-btn" onclick="closeModal('del-modal')">&#215;</button></h2>
-    <p style="color:#6b7280;font-size:14px;margin-bottom:1.5rem">This will permanently delete this entry. Everyone will see it removed immediately.</p>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
-      <button onclick="closeModal('del-modal')">Cancel</button>
-      <button class="danger" id="confirm-del-btn">Delete</button>
-    </div>
-  </div>
+  <div class="modal" style="max-width:360px"><h2>Delete?<button class="close-btn" onclick="closeModal('del-modal')">&#215;</button></h2>
+  <p style="color:#6b7280;margin-bottom:1.5rem">Permanently delete this record?</p>
+  <div style="display:flex;justify-content:flex-end;gap:8px"><button onclick="closeModal('del-modal')">Cancel</button><button class="danger" id="confirm-del-btn">Delete</button></div></div>
 </div>
-
-<!-- CHANGE PASSWORD MODAL -->
 <div id="changepw-modal" class="modal-overlay hidden">
-  <div class="modal" style="max-width:400px">
-    <h2>Change Password<button class="close-btn" onclick="closeModal('changepw-modal')">&#215;</button></h2>
-    <div class="field"><label>Current Password</label><input type="password" id="cp-current" placeholder="Enter current password"></div>
-    <div class="field"><label>New Password</label><input type="password" id="cp-new" placeholder="At least 6 characters"></div>
-    <div class="field"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Re-enter new password"></div>
-    <div id="cp-error" class="error-msg"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
-      <button onclick="closeModal('changepw-modal')">Cancel</button>
-      <button class="primary" id="cp-save-btn" onclick="changePassword()">Update Password</button>
-    </div>
-  </div>
+  <div class="modal" style="max-width:400px"><h2>Change Password<button class="close-btn" onclick="closeModal('changepw-modal')">&#215;</button></h2>
+  <div class="field"><label>Current Password</label><input type="password" id="cp-current"></div>
+  <div class="field"><label>New Password</label><input type="password" id="cp-new"></div>
+  <div class="field"><label>Confirm</label><input type="password" id="cp-confirm"></div>
+  <div id="cp-error" class="error-msg"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button onclick="closeModal('changepw-modal')">Cancel</button><button class="primary" onclick="changePassword()">Update</button></div></div>
+</div>
+<div id="resetpw-modal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:400px"><h2>Reset Password<button class="close-btn" onclick="closeModal('resetpw-modal')">&#215;</button></h2>
+  <p style="font-size:13px;color:#6b7280;margin-bottom:1rem">New password for <strong id="rp-username"></strong></p>
+  <div class="field"><label>New Password</label><input type="password" id="rp-new"></div>
+  <div class="field"><label>Confirm</label><input type="password" id="rp-confirm"></div>
+  <div id="rp-error" class="error-msg"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button onclick="closeModal('resetpw-modal')">Cancel</button><button class="primary" onclick="adminResetPw()">Reset</button></div></div>
 </div>
 
-<!-- ADMIN RESET PASSWORD MODAL -->
-<div id="resetpw-modal" class="modal-overlay hidden">
-  <div class="modal" style="max-width:400px">
-    <h2>Reset Password<button class="close-btn" onclick="closeModal('resetpw-modal')">&#215;</button></h2>
-    <p style="font-size:13px;color:#6b7280;margin-bottom:1rem">Set a new password for <strong id="rp-username"></strong></p>
-    <div class="field"><label>New Password</label><input type="password" id="rp-new" placeholder="At least 6 characters"></div>
-    <div class="field"><label>Confirm Password</label><input type="password" id="rp-confirm" placeholder="Re-enter password"></div>
-    <div id="rp-error" class="error-msg"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
-      <button onclick="closeModal('resetpw-modal')">Cancel</button>
-      <button class="primary" id="rp-save-btn" onclick="adminResetPassword()">Reset Password</button>
+<!-- QUICK-INFO POPUP -->
+<div id="qi-popup" class="qi-overlay hidden" onclick="if(event.target===this)closeQI()">
+  <div class="qi-card">
+    <div class="qi-header">
+      <div class="avatar" id="qi-avatar"></div>
+      <h3 id="qi-name"></h3>
+      <button class="close-qi" onclick="closeQI()">&#215;</button>
+    </div>
+    <div class="qi-body" id="qi-body"></div>
+    <div class="qi-footer">
+      <a id="qi-full-link" href="#" target="_blank">View Full Details &#8599;</a>
     </div>
   </div>
 </div>
@@ -279,512 +335,521 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
 <div class="toast" id="toast"></div>
 
 <script>
-let currentUser = null, isAdmin = false, currentTab = 'internal';
-let allEmployees = [], editingId = null, deleteId = null;
-let importRows = [], eventSource = null;
+let currentUser=null,isAdmin=false,currentTab='resources';
+let allResources=[],allEmployees=[],editingId=null,deleteId=null,importRows=[];
+let eventSource=null;
+let columnFilters={};  // per-column filters: {colKey: filterValue}
 
-const FIELDS_INT = [
-  {k:'name',l:'Full Name',req:true},{k:'title',l:'Job Title',req:true},
-  {k:'department',l:'Department'},{k:'email',l:'Email'},{k:'phone',l:'Phone'},
-  {k:'location',l:'Location / Office'},{k:'manager',l:'Manager'},
-  {k:'employeeId',l:'Employee ID'},{k:'startDate',l:'Start Date',t:'date'},
+const RES_FIELDS=[
+  {k:'counter',l:'Counter'},{k:'s_no',l:'S No'},{k:'month_added',l:'Month Added'},
+  {k:'name',l:'Name',req:true},{k:'type_of_hire',l:'Type of Hire'},{k:'skill_set',l:'Skill Set'},
+  {k:'contractor_phone',l:'Contractor Phone'},{k:'contractor_email',l:'Contractor Email'},
+  {k:'jc_cats',l:'JC # - CATS'},{k:'candidate_cats',l:'Candidate # - CATS'},{k:'assignment_no',l:'Assignment #'},
+  {k:'start_date',l:'Start Date',t:'date'},{k:'end_date',l:'End Date',t:'date'},
+  {k:'contract_status',l:'Contract Status',t:'sel',opts:['Open','Active','On Assignment','Available','Ended','Closed']},
+  {k:'client',l:'Client'},{k:'customer',l:'Customer (If Any)'},{k:'client_contact',l:'Client Contact'},
+  {k:'client_employee_id',l:'Client Employee ID'},{k:'client_po_number',l:'Client PO Number'},
+  {k:'client_timesheet_cycle',l:'Client Timesheet Cycle'},{k:'client_payment_terms',l:'Client Payment Terms'},
+  {k:'invoicing_type',l:'Invoicing Type',t:'sel',opts:['Manual','Automatic']},
+  {k:'rate_type',l:'Rate Type'},{k:'fe_rate_regular',l:'FE Rate (Regular) $/hr'},
+  {k:'fe_rate_ot',l:'FE Rate (OT) $/hr'},{k:'be_rate_regular',l:'BE Rate (Regular) $/hr'},
+  {k:'be_rate_ot',l:'BE Rate (OT) $/hr'},{k:'expenses_paid',l:'Expenses Paid',t:'sel',opts:['Y','N']},
+  {k:'hc',l:'HC',t:'sel',opts:['Y','N']},{k:'hc_cost_month',l:'HC Cost/Month'},
+  {k:'per_diem_rate',l:'Per Diem Rate'},{k:'vendor_name',l:'Vendor Name'},
+  {k:'vendor_email',l:'Vendor Email'},{k:'vendor_phone',l:'Vendor Phone'},
+  {k:'notes',l:'Notes',t:'ta',full:true}
+];
+const EMP_FIELDS=[
+  {k:'name',l:'Full Name',req:true},{k:'title',l:'Job Title'},{k:'department',l:'Department'},
+  {k:'email',l:'Email'},{k:'phone',l:'Phone'},{k:'location',l:'Location'},
+  {k:'manager',l:'Manager'},{k:'employee_id',l:'Employee ID'},{k:'start_date',l:'Start Date',t:'date'},
   {k:'status',l:'Status',t:'sel',opts:['Active','On Leave','Inactive']},
   {k:'notes',l:'Notes',t:'ta',full:true}
 ];
-const FIELDS_RES = [
-  {k:'name',l:'Full Name',req:true},{k:'title',l:'Job Title',req:true},
-  {k:'email',l:'Email'},{k:'phone',l:'Phone'},
-  {k:'clientName',l:'Client Name'},{k:'vendorName',l:'Vendor Name'},
-  {k:'processName',l:'Process / Project Name'},{k:'location',l:'Location'},
-  {k:'startDate',l:'Start Date',t:'date'},{k:'endDate',l:'End Date',t:'date'},
-  {k:'billRate',l:'Bill Rate ($/hr)'},{k:'payRate',l:'Pay Rate ($/hr)'},
-  {k:'recruiter',l:'Recruiter / Lead'},
-  {k:'status',l:'Status',t:'sel',opts:['Active','On Assignment','Available','Ended']},
-  {k:'notes',l:'Notes',t:'ta',full:true}
-];
 
-const DB_MAP = {employeeId:'employee_id',startDate:'start_date',endDate:'end_date',clientName:'client_name',vendorName:'vendor_name',processName:'process_name',billRate:'bill_rate',payRate:'pay_rate',updatedAt:'updated_at',updatedBy:'updated_by'};
-const INV_MAP = Object.fromEntries(Object.entries(DB_MAP).map(([k,v])=>[v,k]));
-function toUI(emp){const o={...emp};for(const[db,ui]of Object.entries(INV_MAP)){if(db in o){o[ui]=o[db];delete o[db]}}return o}
+const RES_DEFAULT_COLS=['name','start_date','end_date','contract_status','type_of_hire','client','vendor_name','vendor_phone','vendor_email','contractor_phone','contractor_email','fe_rate_regular','be_rate_regular','gross_margin'];
+const EMP_DEFAULT_COLS=['name','title','department','email','phone','location','manager','status'];
+const RES_ALL_LIST_COLS=RES_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k).concat(['gross_margin']);
+const EMP_ALL_LIST_COLS=EMP_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k);
 
-const STATUS_COLORS = {
-  Active:{bg:'#d1fae5',c:'#065f46'},'On Assignment':{bg:'#dbeafe',c:'#1e40af'},
-  Available:{bg:'#e0f2fe',c:'#0369a1'},Ended:{bg:'#fee2e2',c:'#b91c1c'},
-  'On Leave':{bg:'#fef3c7',c:'#92400e'},Inactive:{bg:'#f3f4f6',c:'#6b7280'}
-};
+let visibleResCols=[...RES_DEFAULT_COLS];
+let visibleEmpCols=[...EMP_DEFAULT_COLS];
+
+const COL_LABELS={};
+RES_FIELDS.forEach(f=>COL_LABELS[f.k]=f.l);
+EMP_FIELDS.forEach(f=>COL_LABELS[f.k]=f.l);
+COL_LABELS['gross_margin']='Gross Margin';
+
+const SHORT_LABELS={'contractor_phone':'Phone','contractor_email':'Email','vendor_phone':'V.Phone','vendor_email':'V.Email','fe_rate_regular':'Bill','be_rate_regular':'Pay','gross_margin':'GM','contract_status':'Status','type_of_hire':'Type','start_date':'Start','end_date':'End','vendor_name':'Vendor'};
+
+const STATUS_COLORS={Open:{bg:'#d1fae5',c:'#065f46'},Active:{bg:'#d1fae5',c:'#065f46'},'On Assignment':{bg:'#dbeafe',c:'#1e40af'},Available:{bg:'#e0f2fe',c:'#0369a1'},Ended:{bg:'#fee2e2',c:'#b91c1c'},Closed:{bg:'#fee2e2',c:'#b91c1c'},'On Leave':{bg:'#fef3c7',c:'#92400e'},Inactive:{bg:'#f3f4f6',c:'#6b7280'}};
+const ACTIVE_STATUSES=['Open','Active','On Assignment'];
 const AVATAR_COLORS=['#2563eb','#059669','#d97706','#7c3aed','#db2777','#dc2626','#0891b2'];
 function avatarColor(n){let h=0;for(let i=0;i<(n||'').length;i++)h=(h*31+n.charCodeAt(i))%AVATAR_COLORS.length;return AVATAR_COLORS[h]}
 function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
-function fmtDate(d){if(!d)return'';try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}catch{return d}}
+function fmtDate(d){if(!d)return'';try{return new Date(d).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'})}catch{return d}}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+async function api(url,opts={}){const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d}
 
-async function api(url, opts = {}) {
-  const res = await fetch(url, {
-    headers: {'Content-Type':'application/json'},
-    ...opts,
-    body: opts.body ? JSON.stringify(opts.body) : undefined
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+function rawCellValue(rec,k){
+  if(k==='gross_margin'){const b=parseFloat(rec.fe_rate_regular)||0;const p=parseFloat(rec.be_rate_regular)||0;return(b-p).toFixed(2)}
+  return rec[k]||'';
 }
+
+// ── Timer ──
+const REFRESH_INTERVAL=14*60;
+let refreshCountdown=REFRESH_INTERVAL,refreshTimer=null;
+function startRefreshTimer(){refreshCountdown=REFRESH_INTERVAL;if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(()=>{refreshCountdown--;updateTimerDisplay();if(refreshCountdown<=0)refreshNow()},1000);updateTimerDisplay()}
+function updateTimerDisplay(){const m=Math.floor(refreshCountdown/60),s=refreshCountdown%60;document.getElementById('rf-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;document.getElementById('rf-progress').style.width=(refreshCountdown/REFRESH_INTERVAL)*100+'%'}
+async function refreshNow(){refreshCountdown=REFRESH_INTERVAL;updateTimerDisplay();document.getElementById('rf-last').textContent='Last: '+new Date().toLocaleTimeString();await loadAllData();toast('Data refreshed','success')}
 
 // ── Auth ──
-let authMode = 'signin';
-document.getElementById('auth-toggle').addEventListener('click', () => {
-  authMode = authMode === 'signin' ? 'signup' : 'signin';
-  document.getElementById('auth-heading').textContent = authMode === 'signin' ? 'Sign in to your account' : 'Create your account';
-  document.getElementById('auth-btn').textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
-  document.getElementById('auth-toggle-text').textContent = authMode === 'signin' ? "Don't have an account?" : "Already have an account?";
-  document.getElementById('auth-toggle').textContent = authMode === 'signin' ? ' Sign up' : ' Sign in';
-  document.getElementById('auth-name-field').classList.toggle('hidden', authMode === 'signin');
-  document.getElementById('auth-error').style.display = 'none';
+document.getElementById('auth-btn').addEventListener('click',async()=>{
+  const u=document.getElementById('auth-user').value.trim(),p=document.getElementById('auth-pw').value,err=document.getElementById('auth-error');
+  err.style.display='none';
+  if(!u||!p){err.textContent='Username and password required';err.style.display='block';return}
+  try{currentUser=await api('/api/auth/login',{method:'POST',body:{username:u,password:p}});isAdmin=currentUser.role==='admin';showApp()}catch(e){err.textContent=e.message;err.style.display='block'}
 });
+['auth-user','auth-pw'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-btn').click()}));
+document.getElementById('logout-btn').addEventListener('click',async()=>{if(eventSource){eventSource.close();eventSource=null}if(refreshTimer)clearInterval(refreshTimer);await api('/api/auth/logout',{method:'POST'});currentUser=null;isAdmin=false;document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('app').classList.add('hidden')});
+(async()=>{try{currentUser=await api('/api/auth/me');isAdmin=currentUser.role==='admin';showApp()}catch{}})();
 
-document.getElementById('auth-btn').addEventListener('click', async () => {
-  const email = document.getElementById('auth-email').value.trim();
-  const pw = document.getElementById('auth-password').value;
-  const name = document.getElementById('auth-name').value.trim();
-  const errEl = document.getElementById('auth-error');
-  errEl.style.display = 'none';
-  if (!email || !pw) { errEl.textContent = 'Email and password required'; errEl.style.display = 'block'; return; }
-  try {
-    if (authMode === 'signup') {
-      const data = await api('/api/auth/signup', { method: 'POST', body: { email, password: pw, displayName: name } });
-      if (data.firstUser) toast('Welcome! You are the first user \u2014 admin access granted.', 'success');
-      currentUser = data;
-    } else {
-      currentUser = await api('/api/auth/login', { method: 'POST', body: { email, password: pw } });
-    }
-    isAdmin = currentUser.role === 'admin';
-    showApp();
-  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
-});
-
-['auth-email','auth-password','auth-name'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('auth-btn').click(); });
-});
-
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  if (eventSource) { eventSource.close(); eventSource = null; }
-  await api('/api/auth/logout', { method: 'POST' });
-  currentUser = null; isAdmin = false;
-  document.getElementById('auth-screen').classList.remove('hidden');
-  document.getElementById('app').classList.add('hidden');
-});
-
-(async () => {
-  try {
-    currentUser = await api('/api/auth/me');
-    isAdmin = currentUser.role === 'admin';
-    showApp();
-  } catch { /* not logged in */ }
-})();
-
-function showApp() {
+function showApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('header-name').textContent = currentUser.displayName || currentUser.email;
-  applyAdminUI();
-  loadEmployees();
-  connectSSE();
+  document.getElementById('header-name').textContent=currentUser.displayName;
+  applyAdminUI();loadAllData();connectSSE();startRefreshTimer();buildColDropdown();
+}
+function applyAdminUI(){
+  document.getElementById('admin-badge').classList.toggle('hidden',!isAdmin);
+  document.getElementById('users-btn').classList.toggle('hidden',!isAdmin);
+  document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden',!isAdmin));
 }
 
-function applyAdminUI() {
-  document.getElementById('admin-badge').classList.toggle('hidden', !isAdmin);
-  document.getElementById('users-btn').classList.toggle('hidden', !isAdmin);
-  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
-}
-
-// ── SSE: Real-time ──
-function connectSSE() {
-  if (eventSource) eventSource.close();
-  eventSource = new EventSource('/api/events');
-  eventSource.addEventListener('employee-change', e => {
-    const data = JSON.parse(e.data);
-    if (data.action === 'reload') {
-      allEmployees = data.employees.map(toUI);
-    } else if (data.action === 'add') {
-      const emp = toUI(data.employee);
-      if (!allEmployees.find(x => x.id === emp.id)) allEmployees.push(emp);
-    } else if (data.action === 'update') {
-      const emp = toUI(data.employee);
-      const idx = allEmployees.findIndex(x => x.id === emp.id);
-      if (idx >= 0) allEmployees[idx] = emp; else allEmployees.push(emp);
-    } else if (data.action === 'delete') {
-      allEmployees = allEmployees.filter(x => x.id !== data.id);
+// ── SSE ──
+function connectSSE(){
+  if(eventSource)eventSource.close();
+  eventSource=new EventSource('/api/events');
+  eventSource.addEventListener('data-change',e=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='resource'){
+      if(d.action==='reload')allResources=d.records;
+      else if(d.action==='add'){if(!allResources.find(x=>x.id===d.record.id))allResources.push(d.record)}
+      else if(d.action==='update'){const i=allResources.findIndex(x=>x.id===d.record.id);if(i>=0)allResources[i]=d.record;else allResources.push(d.record)}
+      else if(d.action==='delete')allResources=allResources.filter(x=>x.id!==d.id);
+    }else{
+      if(d.action==='reload')allEmployees=d.records;
+      else if(d.action==='add'){if(!allEmployees.find(x=>x.id===d.record.id))allEmployees.push(d.record)}
+      else if(d.action==='update'){const i=allEmployees.findIndex(x=>x.id===d.record.id);if(i>=0)allEmployees[i]=d.record;else allEmployees.push(d.record)}
+      else if(d.action==='delete')allEmployees=allEmployees.filter(x=>x.id!==d.id);
     }
-    renderList(); updateStats();
+    renderList();updateStats();updateGM();
   });
-  eventSource.onerror = () => { setTimeout(connectSSE, 3000); };
+  eventSource.onerror=()=>setTimeout(connectSSE,3000);
 }
 
-async function loadEmployees() {
-  try {
-    const rows = await api('/api/employees');
-    allEmployees = rows.map(toUI);
-    renderList(); updateStats();
-  } catch (e) { toast('Failed to load data: ' + e.message, 'error'); }
+async function loadAllData(){
+  try{const[res,emp]=await Promise.all([api('/api/resources'),api('/api/employees')]);allResources=res;allEmployees=emp;renderList();updateStats();updateGM();if(currentTab==='gm-analysis')renderGMAnalysis()}catch(e){toast('Failed to load: '+e.message,'error')}
 }
+
+// ── GM strip ──
+function updateGM(){
+  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+  let total=0;active.forEach(r=>{total+=(parseFloat(r.fe_rate_regular)||0)-(parseFloat(r.be_rate_regular)||0)});
+  document.getElementById('gm-total').textContent='$'+total.toFixed(2);
+  document.getElementById('gm-detail').textContent=`(${active.length} active resource${active.length!==1?'s':''})`;
+  document.getElementById('gm-strip').classList.toggle('hidden',currentTab!=='resources');
+}
+
+// ── Column toggle / dropdowns ──
+function buildColDropdown(){
+  const dd=document.getElementById('col-dropdown');
+  const allCols=currentTab==='resources'?RES_ALL_LIST_COLS:EMP_ALL_LIST_COLS;
+  const vis=currentTab==='resources'?visibleResCols:visibleEmpCols;
+  dd.innerHTML=allCols.map(k=>`<label><input type="checkbox" value="${k}" ${vis.includes(k)?'checked':''} onchange="toggleCol('${k}',this.checked)">${COL_LABELS[k]||k}</label>`).join('');
+}
+function toggleCol(k,show){const vis=currentTab==='resources'?visibleResCols:visibleEmpCols;if(show&&!vis.includes(k))vis.push(k);else if(!show){const i=vis.indexOf(k);if(i>=0)vis.splice(i,1)}renderList()}
+function toggleColDropdown(){buildColDropdown();document.getElementById('col-dropdown').classList.toggle('open')}
+function toggleExportDropdown(){document.getElementById('export-dropdown').classList.toggle('open')}
+document.addEventListener('click',e=>{if(!e.target.closest('.col-toggle-wrap'))document.getElementById('col-dropdown').classList.remove('open');if(!e.target.closest('.export-wrap'))document.getElementById('export-dropdown').classList.remove('open')});
 
 // ── Tabs ──
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentTab = btn.dataset.tab;
-    updateStatusFilter(); renderList();
-  });
-});
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');currentTab=btn.dataset.tab;
+  columnFilters={};
+  const isGM=currentTab==='gm-analysis';
+  document.getElementById('toolbar').classList.toggle('hidden',isGM);
+  document.getElementById('data-list').classList.toggle('hidden',isGM);
+  document.getElementById('gm-view').classList.toggle('hidden',!isGM);
+  if(isGM){renderGMAnalysis()}else{updateStatusFilter();renderList();buildColDropdown()}
+  updateGM();
+}));
+document.getElementById('search-input').addEventListener('input',renderList);
+document.getElementById('filter-status').addEventListener('change',renderList);
+document.getElementById('sort-field').addEventListener('change',renderList);
+document.getElementById('sort-dir').addEventListener('change',renderList);
 
-document.getElementById('search-input').addEventListener('input', renderList);
-document.getElementById('filter-status').addEventListener('change', renderList);
-document.getElementById('sort-field').addEventListener('change', renderList);
-document.getElementById('sort-dir').addEventListener('change', renderList);
-
-function updateStatusFilter() {
-  const opts = currentTab === 'internal' ? ['Active','On Leave','Inactive'] : ['Active','On Assignment','Available','Ended'];
-  document.getElementById('filter-status').innerHTML = '<option value="">All Status</option>' + opts.map(o => `<option>${o}</option>`).join('');
+function updateStatusFilter(){
+  const opts=currentTab==='resources'?['Open','Active','On Assignment','Available','Ended','Closed']:['Active','On Leave','Inactive'];
+  document.getElementById('filter-status').innerHTML='<option value="">All Status</option>'+opts.map(o=>`<option>${o}</option>`).join('');
+  const sf=document.getElementById('sort-field');
+  sf.innerHTML=currentTab==='resources'
+    ?'<option value="name">Sort: Name</option><option value="client">Sort: Client</option><option value="start_date">Sort: Start Date</option><option value="contract_status">Sort: Status</option><option value="vendor_name">Sort: Vendor</option>'
+    :'<option value="name">Sort: Name</option><option value="title">Sort: Title</option><option value="department">Sort: Dept</option><option value="status">Sort: Status</option>';
 }
 updateStatusFilter();
 
-function getFiltered() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const st = document.getElementById('filter-status').value;
-  const sf = document.getElementById('sort-field').value;
-  const sd = document.getElementById('sort-dir').value;
-  let list = allEmployees.filter(e => e.type === currentTab);
-  if (q) list = list.filter(e => Object.values(e).some(v => String(v || '').toLowerCase().includes(q)));
-  if (st) list = list.filter(e => e.status === st);
-  list.sort((a, b) => {
-    let va = String(a[sf] || '').toLowerCase(), vb = String(b[sf] || '').toLowerCase();
-    return sd === 'asc' ? (va > vb ? 1 : va < vb ? -1 : 0) : (va < vb ? 1 : va > vb ? -1 : 0);
+function getFiltered(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const st=document.getElementById('filter-status').value;
+  const sf=document.getElementById('sort-field').value;
+  const sd=document.getElementById('sort-dir').value;
+  let list=currentTab==='resources'?[...allResources]:[...allEmployees];
+  const statusKey=currentTab==='resources'?'contract_status':'status';
+  if(q)list=list.filter(e=>Object.values(e).some(v=>String(v||'').toLowerCase().includes(q)));
+  if(st)list=list.filter(e=>e[statusKey]===st);
+  // Apply per-column filters
+  Object.keys(columnFilters).forEach(k=>{
+    const fv=columnFilters[k];
+    if(!fv)return;
+    list=list.filter(rec=>String(rawCellValue(rec,k)).toLowerCase()===fv.toLowerCase());
   });
+  list.sort((a,b)=>{let va=String(a[sf]||'').toLowerCase(),vb=String(b[sf]||'').toLowerCase();return sd==='asc'?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0)});
   return list;
 }
 
-function renderList() {
-  const list = getFiltered();
-  const container = document.getElementById('employee-list');
-  const cols = currentTab === 'internal'
-    ? ['Name','Title','Department','Email','Phone','Status','']
-    : ['Name','Title','Client','Vendor','Process / Project','Start','Status',''];
-  const tabClass = 'list-' + (currentTab === 'internal' ? 'internal' : 'resources');
+function cellHTML(rec,k){
+  if(k==='gross_margin'){const b=parseFloat(rec.fe_rate_regular)||0;const p=parseFloat(rec.be_rate_regular)||0;return'$'+(b-p).toFixed(2)}
+  if(k==='fe_rate_regular'||k==='be_rate_regular'||k==='fe_rate_ot'||k==='be_rate_ot'){const v=parseFloat(rec[k]);return isNaN(v)?'\u2014':'$'+v.toFixed(0)}
+  if(k==='start_date'||k==='end_date')return fmtDate(rec[k])||'\u2014';
+  if(k==='contract_status'||k==='status'){const val=rec[k]||'\u2014';const sc=STATUS_COLORS[val]||{bg:'#f3f4f6',c:'#6b7280'};return`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(val)}</span>`}
+  return esc(rec[k]||'\u2014');
+}
 
-  document.getElementById('tab-int-count').textContent = '(' + allEmployees.filter(e => e.type === 'internal').length + ')';
-  document.getElementById('tab-res-count').textContent = '(' + allEmployees.filter(e => e.type === 'resources').length + ')';
+// Get unique values for column filter dropdowns
+function uniqueVals(list,k){
+  const s=new Set();
+  list.forEach(rec=>{const v=rawCellValue(rec,k);if(v)s.add(String(v))});
+  return[...s].sort();
+}
 
-  if (!list.length) {
-    container.innerHTML = `<div class="${tabClass}"><div class="empty-state">No records found. ${isAdmin ? 'Click <strong>+ Add</strong> to get started or import from Excel.' : ''}</div></div>`;
+function renderList(){
+  const allData=currentTab==='resources'?allResources:allEmployees;
+  const list=getFiltered();
+  const c=document.getElementById('data-list');
+  document.getElementById('tab-res-count').textContent='('+allResources.length+')';
+  document.getElementById('tab-int-count').textContent='('+allEmployees.length+')';
+
+  if(!allData.length){c.innerHTML=`<div class="empty-state">No records. ${isAdmin?'Click <strong>+ Add</strong> or import.':''}</div>`;return}
+
+  const visCols=currentTab==='resources'?visibleResCols:visibleEmpCols;
+  const type=currentTab==='resources'?'resource':'employee';
+
+  // Header row
+  let thead='<tr>'+visCols.map(k=>`<th>${SHORT_LABELS[k]||COL_LABELS[k]||k}</th>`).join('')+(isAdmin?'<th style="width:50px"></th>':'')+'</tr>';
+
+  // Filter row
+  thead+='<tr class="filter-row">'+visCols.map(k=>{
+    const vals=uniqueVals(allData,k);
+    if(vals.length<2||vals.length>50)return'<th></th>';
+    const cur=columnFilters[k]||'';
+    return`<th><select onchange="setColFilter('${k}',this.value)"><option value="">All</option>${vals.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v.length>20?v.slice(0,18)+'..':v)}</option>`).join('')}</select></th>`;
+  }).join('')+(isAdmin?'<th></th>':'')+'</tr>';
+
+  // Body rows
+  let tbody='';
+  if(!list.length){
+    tbody=`<tr><td colspan="${visCols.length+(isAdmin?1:0)}" style="text-align:center;padding:2rem;color:#9ca3af">No matching records</td></tr>`;
+  }else{
+    tbody=list.map(rec=>{
+      const cells=visCols.map(k=>{
+        if(k==='name'){
+          const av=avatarColor(rec.name);
+          return`<td><a class="name-link" href="javascript:void(0)" onclick="showQI('${type}','${rec.id}');event.stopPropagation()"><div class="avatar" style="background:${av}">${initials(rec.name)}</div>${esc(rec.name||'\u2014')}</a></td>`;
+        }
+        const isGm=k==='gross_margin';
+        const isMuted=['contractor_phone','contractor_email','vendor_phone','vendor_email','start_date','end_date','type_of_hire','location','phone','manager','department'].includes(k);
+        return`<td class="${isGm?'gm-cell':''}${isMuted?' muted':''}">${cellHTML(rec,k)}</td>`;
+      }).join('');
+      const actBtn=isAdmin?`<td><button class="sm ghost" onclick="openEdit('${rec.id}');event.stopPropagation()">Edit</button></td>`:'';
+      return`<tr>${cells}${actBtn}</tr>`;
+    }).join('');
+  }
+
+  c.innerHTML=`<div class="data-table-wrap"><table class="data-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+function setColFilter(k,v){columnFilters[k]=v;renderList()}
+
+// ── GM Analysis Tab ──
+function renderGMAnalysis(){
+  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+
+  // Gather all months from start_date
+  const months=new Set();
+  allResources.forEach(r=>{
+    if(r.start_date){const d=new Date(r.start_date);if(!isNaN(d))months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+    if(r.end_date){const d=new Date(r.end_date);if(!isNaN(d))months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+    if(r.month_added)months.add(r.month_added);
+  });
+  // Also add current month and surrounding months
+  const now=new Date();
+  for(let m=-6;m<=6;m++){const d=new Date(now.getFullYear(),now.getMonth()+m,1);months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+  const sortedMonths=[...months].filter(m=>/^\d{4}-\d{2}$/.test(m)).sort().reverse();
+
+  const selMonth=document.getElementById('gm-view').dataset.month||now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  // Filter resources active in selected month
+  const[yr,mn]=selMonth.split('-').map(Number);
+  const monthStart=new Date(yr,mn-1,1);
+  const monthEnd=new Date(yr,mn,0);
+
+  const inMonth=allResources.filter(r=>{
+    if(r.contract_status==='Ended'||r.contract_status==='Closed'){
+      // Only include if it ended during or after this month and started before or during
+    }
+    const sd=r.start_date?new Date(r.start_date):null;
+    const ed=r.end_date?new Date(r.end_date):null;
+    if(sd&&sd>monthEnd)return false;
+    if(ed&&ed<monthStart)return false;
+    return true;
+  });
+
+  let totalGM=0,totalBill=0,totalPay=0;
+  inMonth.forEach(r=>{
+    const b=parseFloat(r.fe_rate_regular)||0;
+    const p=parseFloat(r.be_rate_regular)||0;
+    totalBill+=b;totalPay+=p;totalGM+=b-p;
+  });
+
+  const monthLabel=new Date(yr,mn-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  let html=`<div class="gm-analysis">
+    <div class="gm-month-selector">
+      <strong>Gross Margin Analysis</strong>
+      <select id="gm-month-sel" onchange="document.getElementById('gm-view').dataset.month=this.value;renderGMAnalysis()">
+        ${sortedMonths.map(m=>{
+          const[y,mo]=m.split('-');
+          const lbl=new Date(y,mo-1).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+          return`<option value="${m}"${m===selMonth?' selected':''}>${lbl}</option>`;
+        }).join('')}
+      </select>
+    </div>
+    <div class="gm-summary">
+      <div class="gm-sum-card"><div class="val">$${totalGM.toFixed(2)}</div><div class="lbl">Total GM/hr &middot; ${monthLabel}</div></div>
+      <div class="gm-sum-card"><div class="val">$${totalBill.toFixed(2)}</div><div class="lbl">Total Bill Rate/hr</div></div>
+      <div class="gm-sum-card"><div class="val">${inMonth.length}</div><div class="lbl">Resources in ${monthLabel}</div></div>
+    </div>`;
+
+  if(inMonth.length){
+    html+=`<div class="data-table-wrap"><table class="data-table">
+      <thead><tr><th>Name</th><th>Client</th><th>Status</th><th>Start</th><th>End</th><th>Bill Rate</th><th>Pay Rate</th><th>GM/hr</th></tr></thead><tbody>`;
+    inMonth.sort((a,b)=>{const ga=(parseFloat(a.fe_rate_regular)||0)-(parseFloat(a.be_rate_regular)||0);const gb=(parseFloat(b.fe_rate_regular)||0)-(parseFloat(b.be_rate_regular)||0);return gb-ga});
+    inMonth.forEach(r=>{
+      const b=parseFloat(r.fe_rate_regular)||0;
+      const p=parseFloat(r.be_rate_regular)||0;
+      const gm=b-p;
+      const sc=STATUS_COLORS[r.contract_status]||{bg:'#f3f4f6',c:'#6b7280'};
+      html+=`<tr>
+        <td><a class="name-link" href="javascript:void(0)" onclick="showQI('resource','${r.id}')">${esc(r.name)}</a></td>
+        <td>${esc(r.client||'\u2014')}</td>
+        <td><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(r.contract_status||'\u2014')}</span></td>
+        <td class="muted">${fmtDate(r.start_date)||'\u2014'}</td>
+        <td class="muted">${fmtDate(r.end_date)||'\u2014'}</td>
+        <td>$${b.toFixed(0)}</td>
+        <td>$${p.toFixed(0)}</td>
+        <td class="gm-cell">$${gm.toFixed(2)}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div>`;
+  }else{
+    html+=`<div class="empty-state">No resources active in ${monthLabel}</div>`;
+  }
+
+  html+=`</div>`;
+  document.getElementById('gm-view').innerHTML=html;
+}
+
+function updateStats(){
+  const actRes=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+  document.getElementById('stat-int').textContent=allEmployees.length;
+  document.getElementById('stat-int-active').textContent=allEmployees.filter(e=>e.status==='Active').length+' active';
+  document.getElementById('stat-res').textContent=allResources.length;
+  document.getElementById('stat-res-active').textContent=actRes.length+' active';
+  document.getElementById('stat-total').textContent=allResources.length+allEmployees.length;
+  const all=[...allResources,...allEmployees].sort((a,b)=>(b.updated_at||'')>(a.updated_at||'')?1:-1);
+  if(all[0]?.updated_at){
+    document.getElementById('stat-updated').textContent=new Date(all[0].updated_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    document.getElementById('stat-updated-by').textContent='by '+(all[0].updated_by||'someone');
+  }
+}
+
+// ── Add/Edit ──
+document.getElementById('add-btn').addEventListener('click',()=>{editingId=null;document.getElementById('modal-title').textContent='Add '+(currentTab==='resources'?'Resource':'Employee');document.getElementById('delete-btn').style.display='none';buildForm({});document.getElementById('emp-modal').classList.remove('hidden')});
+
+function openEdit(id){
+  const rec=currentTab==='resources'?allResources.find(x=>x.id===id):allEmployees.find(x=>x.id===id);
+  if(!rec){
+    // Try both lists
+    const r2=allResources.find(x=>x.id===id);
+    if(r2){currentTab='resources';document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.tab==='resources')});updateStatusFilter();renderList();updateGM()}
+    const e2=allEmployees.find(x=>x.id===id);
+    const found=r2||e2;if(!found)return;
+    editingId=id;
+    document.getElementById('modal-title').textContent='Edit: '+found.name;
+    document.getElementById('delete-btn').style.display=isAdmin?'':'none';
+    buildForm(found);
+    document.getElementById('emp-modal').classList.remove('hidden');
     return;
   }
-
-  const sf = document.getElementById('sort-field').value;
-  const sd = document.getElementById('sort-dir').value;
-  const colKeys = currentTab === 'internal'
-    ? ['name','title','department','email','phone','status']
-    : ['name','title','client_name','vendor_name','process_name','start_date','status'];
-  const headerHTML = cols.map((c, i) => {
-    if (!c) return '<span></span>';
-    const key = colKeys[i]; const isActive = sf === key;
-    return `<span onclick="setSort('${key}')">${c}<span class="sort-icon${isActive ? ' active' : ''}">${isActive ? (sd === 'asc' ? '\u25B2' : '\u25BC') : '\u21C5'}</span></span>`;
-  }).join('');
-
-  const rowsHTML = list.map(e => {
-    const sc = STATUS_COLORS[e.status] || {bg:'#f3f4f6',c:'#6b7280'};
-    const av = avatarColor(e.name);
-    const cells = currentTab === 'internal'
-      ? [
-          `<div class="emp-name"><div class="avatar" style="background:${av}">${initials(e.name)}</div>${esc(e.name||'\u2014')}</div>`,
-          `<div class="emp-cell">${esc(e.title||'\u2014')}</div>`,
-          `<div class="emp-cell muted">${esc(e.department||'\u2014')}</div>`,
-          `<div class="emp-cell" style="color:#2563eb">${esc(e.email||'\u2014')}</div>`,
-          `<div class="emp-cell muted">${esc(e.phone||'\u2014')}</div>`,
-          `<div><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(e.status||'\u2014')}</span></div>`,
-        ]
-      : [
-          `<div class="emp-name"><div class="avatar" style="background:${av}">${initials(e.name)}</div>${esc(e.name||'\u2014')}</div>`,
-          `<div class="emp-cell">${esc(e.title||'\u2014')}</div>`,
-          `<div class="emp-cell muted">${esc(e.clientName||'\u2014')}</div>`,
-          `<div class="emp-cell muted">${esc(e.vendorName||'\u2014')}</div>`,
-          `<div class="emp-cell">${esc(e.processName||'\u2014')}</div>`,
-          `<div class="emp-cell muted">${fmtDate(e.startDate)||'\u2014'}</div>`,
-          `<div><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(e.status||'\u2014')}</span></div>`,
-        ];
-    const actCell = isAdmin
-      ? `<div class="actions-cell"><button class="sm" onclick="openEdit('${e.id}',event)">Edit</button></div>`
-      : `<div class="actions-cell"></div>`;
-    return `<div class="employee-row ${tabClass}" onclick="openEdit('${e.id}',event)">${cells.join('')}${actCell}</div>`;
-  }).join('');
-
-  container.innerHTML = `<div class="${tabClass}"><div class="list-header ${tabClass}">${headerHTML}</div>${rowsHTML}</div>`;
-}
-
-function setSort(field) {
-  const sd = document.getElementById('sort-dir');
-  if (document.getElementById('sort-field').value === field) sd.value = sd.value === 'asc' ? 'desc' : 'asc';
-  else { document.getElementById('sort-field').value = field; sd.value = 'asc'; }
-  renderList();
-}
-
-function updateStats() {
-  const ints = allEmployees.filter(e => e.type === 'internal');
-  const res = allEmployees.filter(e => e.type === 'resources');
-  document.getElementById('stat-int').textContent = ints.length;
-  document.getElementById('stat-int-active').textContent = ints.filter(e => e.status === 'Active').length + ' active';
-  document.getElementById('stat-res').textContent = res.length;
-  document.getElementById('stat-res-active').textContent = res.filter(e => e.status === 'Active' || e.status === 'On Assignment').length + ' active/on-assignment';
-  document.getElementById('stat-total').textContent = allEmployees.length;
-  const sorted = [...allEmployees].sort((a, b) => (b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1);
-  const recent = sorted[0];
-  if (recent?.updatedAt) {
-    document.getElementById('stat-updated').textContent = new Date(recent.updatedAt).toLocaleDateString('en-IN', {day:'2-digit',month:'short'});
-    document.getElementById('stat-updated-by').textContent = 'by ' + (recent.updatedBy || 'someone');
-  }
-}
-
-// ── Add / Edit ──
-document.getElementById('add-btn').addEventListener('click', () => openAdd());
-function openAdd() {
-  editingId = null;
-  document.getElementById('modal-title').textContent = 'Add ' + (currentTab === 'internal' ? 'Employee' : 'Resource');
-  document.getElementById('delete-btn').style.display = 'none';
-  buildForm({});
+  editingId=id;
+  document.getElementById('modal-title').textContent='Edit: '+rec.name;
+  document.getElementById('delete-btn').style.display=isAdmin?'':'none';
+  buildForm(rec);
   document.getElementById('emp-modal').classList.remove('hidden');
 }
-function openEdit(id, e) {
-  if (e) e.stopPropagation();
-  const emp = allEmployees.find(x => x.id === id);
-  if (!emp) return;
-  editingId = id;
-  document.getElementById('modal-title').textContent = 'Edit: ' + emp.name;
-  document.getElementById('delete-btn').style.display = isAdmin ? '' : 'none';
-  buildForm(emp);
-  document.getElementById('emp-modal').classList.remove('hidden');
-}
-function buildForm(data) {
-  const fields = data.type === 'resources' || currentTab === 'resources' ? FIELDS_RES : FIELDS_INT;
-  const html = '<div class="form-grid">' + fields.map(f => {
-    const val = data[f.k] || '';
-    let inp = '';
-    if (f.t === 'sel') inp = `<select id="f_${f.k}"><option value="">\u2014</option>${f.opts.map(o => `<option${val === o ? ' selected' : ''}>${o}</option>`).join('')}</select>`;
-    else if (f.t === 'ta') inp = `<textarea id="f_${f.k}" rows="2">${esc(val)}</textarea>`;
-    else inp = `<input type="${f.t || 'text'}" id="f_${f.k}" value="${val.toString().replace(/"/g, '&quot;')}">`;
-    return `<div class="${f.full ? 'form-full' : ''}"><div class="field"><label>${f.l}${f.req ? '<span style="color:#b91c1c"> *</span>' : ''}</label>${inp}</div></div>`;
-  }).join('') + '</div>';
-  document.getElementById('modal-form-fields').innerHTML = html;
+
+function buildForm(data){
+  const fields=currentTab==='resources'?RES_FIELDS:EMP_FIELDS;
+  const html='<div class="form-grid">'+fields.map(f=>{
+    const val=data[f.k]||'';let inp='';
+    if(f.t==='sel')inp=`<select id="f_${f.k}"><option value="">\u2014</option>${f.opts.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+    else if(f.t==='ta')inp=`<textarea id="f_${f.k}" rows="2">${esc(val)}</textarea>`;
+    else inp=`<input type="${f.t||'text'}" id="f_${f.k}" value="${String(val).replace(/"/g,'&quot;')}">`;
+    return`<div class="${f.full?'form-full':''}"><div class="field"><label>${f.l}${f.req?'<span style="color:#b91c1c"> *</span>':''}</label>${inp}</div></div>`;
+  }).join('')+'</div>';
+  document.getElementById('modal-form-fields').innerHTML=html;
 }
 
-async function saveEmployee() {
-  const fields = editingId
-    ? ((allEmployees.find(x => x.id === editingId) || {}).type === 'resources' ? FIELDS_RES : FIELDS_INT)
-    : (currentTab === 'resources' ? FIELDS_RES : FIELDS_INT);
-  const data = {type: editingId ? (allEmployees.find(x => x.id === editingId) || {}).type || currentTab : currentTab};
-  let valid = true;
-  fields.forEach(f => {
-    const el = document.getElementById('f_' + f.k);
-    if (!el) return;
-    data[f.k] = el.value.trim();
-    if (f.req && !data[f.k]) valid = false;
-  });
-  if (!valid) { toast('Please fill in all required fields', 'error'); return; }
-  document.getElementById('save-btn').textContent = 'Saving\u2026';
-  try {
-    if (editingId) await api('/api/employees/' + editingId, {method:'PUT', body:data});
-    else await api('/api/employees', {method:'POST', body:data});
-    closeModal('emp-modal');
-    toast('Saved successfully', 'success');
-    await loadEmployees();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  document.getElementById('save-btn').textContent = 'Save';
+async function saveRecord(){
+  const fields=currentTab==='resources'?RES_FIELDS:EMP_FIELDS;
+  const data={};let valid=true;
+  fields.forEach(f=>{const el=document.getElementById('f_'+f.k);if(el){data[f.k]=el.value.trim();if(f.req&&!data[f.k])valid=false}});
+  if(!valid){toast('Fill required fields','error');return}
+  const endpoint=currentTab==='resources'?'/api/resources':'/api/employees';
+  document.getElementById('save-btn').textContent='Saving\u2026';
+  try{if(editingId)await api(endpoint+'/'+editingId,{method:'PUT',body:data});else await api(endpoint,{method:'POST',body:data});closeModal('emp-modal');toast('Saved','success');await loadAllData()}catch(e){toast(e.message,'error')}
+  document.getElementById('save-btn').textContent='Save';
 }
 
-function confirmDelete() { deleteId = editingId; document.getElementById('del-modal').classList.remove('hidden'); }
-document.getElementById('confirm-del-btn').addEventListener('click', async () => {
-  if (!deleteId) return;
-  try {
-    await api('/api/employees/' + deleteId, {method:'DELETE'});
-    closeModal('del-modal'); closeModal('emp-modal');
-    toast('Deleted', 'success');
-    await loadEmployees();
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
-  deleteId = null;
-});
+function confirmDelete(){deleteId=editingId;document.getElementById('del-modal').classList.remove('hidden')}
+document.getElementById('confirm-del-btn').addEventListener('click',async()=>{if(!deleteId)return;const endpoint=currentTab==='resources'?'/api/resources':'/api/employees';try{await api(endpoint+'/'+deleteId,{method:'DELETE'});closeModal('del-modal');closeModal('emp-modal');toast('Deleted','success');await loadAllData()}catch(e){toast(e.message,'error')}deleteId=null});
 
 // ── Export ──
-document.getElementById('export-btn').addEventListener('click', () => {
-  const list = getFiltered();
-  if (!list.length) { toast('No records to export'); return; }
-  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
-  const headers = fields.map(f => f.l);
-  const rows = list.map(e => fields.map(f => e[f.k] || ''));
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, currentTab === 'internal' ? 'Internal' : 'Resources');
-  XLSX.writeFile(wb, `ReqRoute_${currentTab}_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast('Excel downloaded', 'success');
-});
-
-// ── Import ──
-document.getElementById('import-btn').addEventListener('click', () => {
-  document.getElementById('import-modal').classList.remove('hidden'); resetImport();
-});
-document.getElementById('file-input').addEventListener('change', e => handleImportFile(e.target.files[0]));
-const dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleImportFile(e.dataTransfer.files[0]); });
-
-function handleImportFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const wb = XLSX.read(e.target.result, {type:'binary'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-    if (data.length < 2) { toast('File appears empty', 'error'); return; }
-    importRows = data;
-    showImportPreview(data);
-  };
-  reader.readAsBinaryString(file);
+function doExport(mode){
+  document.getElementById('export-dropdown').classList.remove('open');
+  const list=getFiltered();if(!list.length){toast('No records');return}
+  let cols,headers;
+  if(mode==='all'){cols=currentTab==='resources'?RES_FIELDS.map(f=>f.k).concat(['gross_margin']):EMP_FIELDS.map(f=>f.k);headers=currentTab==='resources'?RES_FIELDS.map(f=>f.l).concat(['Gross Margin']):EMP_FIELDS.map(f=>f.l)}
+  else{cols=currentTab==='resources'?visibleResCols:visibleEmpCols;headers=cols.map(k=>COL_LABELS[k]||k)}
+  const rows=list.map(r=>cols.map(k=>rawCellValue(r,k)));
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,currentTab==='resources'?'Resources':'Employees');
+  XLSX.writeFile(wb,`ReqRoute_${currentTab}_${mode==='all'?'all_fields':'current_view'}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Downloaded','success');
 }
 
-function showImportPreview(data) {
-  const headers = data[0];
-  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
-  document.getElementById('preview-count').textContent = (data.length - 1) + ' rows found';
-  const mapHTML = '<div style="margin-bottom:1rem"><strong style="font-size:13px">Column Mapping</strong><p style="font-size:12px;color:#9ca3af;margin:.25rem 0 .75rem">Match your file columns to the directory fields</p>' +
-    fields.filter(f => f.k !== 'notes').map(f => `
-    <div class="col-map">
-      <span style="color:#374151">${f.l}</span>
-      <span style="color:#9ca3af;font-size:18px">\u2190</span>
-      <select id="map_${f.k}"><option value="">\u2014 skip \u2014</option>${headers.map((h, i) => `<option value="${i}"${h.toLowerCase().includes(f.k.toLowerCase()) || h.toLowerCase().includes(f.l.toLowerCase()) ? 'selected' : ''}>${esc(String(h))}</option>`).join('')}</select>
-    </div>`).join('') + '</div>';
-  const preview = data.slice(1, 6);
-  const previewHTML = '<table class="preview-table"><thead><tr>' + headers.map(h => `<th>${esc(String(h))}</th>`).join('') + '</tr></thead><tbody>' +
-    preview.map(r => '<tr>' + r.map(c => `<td>${esc(String(c))}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
-  document.getElementById('col-mapping').innerHTML = mapHTML;
-  document.querySelector('.preview-table-wrap').innerHTML = previewHTML;
+// ── Import ──
+document.getElementById('import-btn').addEventListener('click',()=>{document.getElementById('import-modal').classList.remove('hidden');resetImport()});
+document.getElementById('file-input').addEventListener('change',e=>handleFile(e.target.files[0]));
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+
+function handleFile(file){if(!file)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'binary'});const d=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});if(d.length<2){toast('Empty file','error');return}importRows=d;showPreview(d)};r.readAsBinaryString(file)}
+
+function fuzzyMatch(header,fieldKey){
+  const h=header.toLowerCase().replace(/[^a-z0-9]/g,''),fk=fieldKey.replace(/_/g,'');
+  if(h===fk)return true;
+  const aliases={name:['name','resourcename','fullname','employeename','contractorname'],fe_rate_regular:['feratregular','ferate','billrate','billingrate','feregular'],be_rate_regular:['beratregular','berate','payrate','beregular'],contractor_phone:['contractorphone','phone','contactnumber','contractorcontactnumber'],contractor_email:['contractoremail','email','contractoremailaddress'],contract_status:['contractstatus','status'],type_of_hire:['typeofhire','hiretype','type'],vendor_name:['vendorname','vendor'],vendor_phone:['vendorcontactnumber','vendorphone'],vendor_email:['vendorcontactemail','vendoremail'],start_date:['startdate','start'],end_date:['enddate','end'],client:['client','clientname'],skill_set:['skillset','skills','skill'],assignment_no:['assignmentno','assignment','assignmentnumber'],jc_cats:['jccats','jc'],candidate_cats:['candidatecats','candidate'],hc_cost_month:['hccostmonth','hccost'],per_diem_rate:['perdiemrate','perdiem'],client_timesheet_cycle:['clienttimesheetcycle','timesheetcycle'],client_payment_terms:['clientpaymentterms','paymentterms'],invoicing_type:['invoicingtype','invoicing'],client_employee_id:['clientemployeeid'],client_po_number:['clientponumber','ponumber'],client_contact:['clientcontact'],month_added:['monthadded','month'],expenses_paid:['expensespaid','expenses'],rate_type:['ratetype']};
+  const list=aliases[fieldKey]||[];
+  return list.includes(h)||h.includes(fk);
+}
+
+function showPreview(data){
+  const hdrs=data[0];const fields=currentTab==='resources'?RES_FIELDS:EMP_FIELDS;
+  document.getElementById('preview-count').textContent=(data.length-1)+' rows';
+  document.getElementById('col-mapping').innerHTML='<div style="margin-bottom:.75rem"><strong style="font-size:13px">Column Mapping</strong> <span style="color:#6b7280;font-size:12px">(auto-detected, adjust if needed)</span></div>'+
+    fields.filter(f=>f.k!=='notes').map(f=>{let bestIdx='';hdrs.forEach((h,i)=>{if(fuzzyMatch(String(h),f.k))bestIdx=String(i)});return`<div class="col-map"><span>${f.l}</span><span style="color:#9ca3af">\u2190</span><select id="map_${f.k}"><option value="">\u2014 skip \u2014</option>${hdrs.map((h,i)=>`<option value="${i}"${String(i)===bestIdx?' selected':''}>${esc(String(h))}</option>`).join('')}</select></div>`}).join('');
+  document.getElementById('preview-wrap').innerHTML='<table class="preview-table"><thead><tr>'+hdrs.map(h=>`<th>${esc(String(h))}</th>`).join('')+'</tr></thead><tbody>'+data.slice(1,6).map(r=>'<tr>'+r.map(c=>`<td>${esc(String(c))}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
   document.getElementById('import-preview').classList.remove('hidden');
   document.getElementById('drop-zone').classList.add('hidden');
 }
 
-async function runImport() {
-  const fields = currentTab === 'internal' ? FIELDS_INT : FIELDS_RES;
-  const mapped = importRows.slice(1).map(row => {
-    const data = {};
-    fields.filter(f => f.k !== 'notes').forEach(f => {
-      const sel = document.getElementById('map_' + f.k);
-      if (sel && sel.value !== '') data[f.k] = String(row[parseInt(sel.value)] || '').trim();
-    });
-    return data;
-  }).filter(d => d.name);
-  try {
-    const result = await api('/api/employees/import', {method:'POST', body:{rows:mapped, type:currentTab}});
-    closeModal('import-modal');
-    toast(`Imported ${result.imported} records successfully`, 'success');
-    await loadEmployees();
-  } catch (e) { toast('Import error: ' + e.message, 'error'); }
+async function runImport(){
+  const fields=currentTab==='resources'?RES_FIELDS:EMP_FIELDS;
+  const mapped=importRows.slice(1).map(row=>{const d={};fields.filter(f=>f.k!=='notes').forEach(f=>{const sel=document.getElementById('map_'+f.k);if(sel&&sel.value!=='')d[f.k]=String(row[parseInt(sel.value)]||'').trim()});return d}).filter(d=>d.name);
+  const endpoint=currentTab==='resources'?'/api/resources/import':'/api/employees/import';
+  try{const r=await api(endpoint,{method:'POST',body:{rows:mapped}});closeModal('import-modal');toast(`Imported ${r.imported} records`,'success');await loadAllData()}catch(e){toast(e.message,'error')}
 }
-
-function resetImport() {
-  importRows = [];
-  document.getElementById('drop-zone').classList.remove('hidden');
-  document.getElementById('import-preview').classList.add('hidden');
-  document.getElementById('file-input').value = '';
-}
+function resetImport(){importRows=[];document.getElementById('drop-zone').classList.remove('hidden');document.getElementById('import-preview').classList.add('hidden');document.getElementById('file-input').value=''}
 
 // ── Users ──
-document.getElementById('users-btn').addEventListener('click', async () => {
-  document.getElementById('users-modal').classList.remove('hidden');
-  try { renderUsers(await api('/api/users')); } catch (e) { toast('Error loading users', 'error'); }
-});
-
-function renderUsers(users) {
-  document.getElementById('user-count').textContent = '(' + users.length + ' users)';
-  document.getElementById('users-list').innerHTML = users.map(u => {
-    const isMe = u.id === currentUser.id;
-    const isUAdmin = u.role === 'admin';
-    return `<div class="user-row">
-      <div class="user-avatar">${initials(u.display_name || u.email)}</div>
-      <div class="user-info-row">
-        <div class="user-name">${esc(u.display_name || '\u2014')} ${isMe ? '<span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:3px;font-weight:400">(you)</span>' : ''}</div>
-        <div class="user-email">${esc(u.email)}</div>
-      </div>
-      <span class="status-badge" style="background:${isUAdmin ? '#dbeafe' : '#f3f4f6'};color:${isUAdmin ? '#1e40af' : '#6b7280'}">${isUAdmin ? 'Admin' : 'User'}</span>
-      ${!isMe ? `<button class="sm" onclick="toggleAdmin('${u.id}','${u.role}')">${isUAdmin ? 'Remove Admin' : 'Make Admin'}</button><button class="sm" onclick="openResetPassword('${u.id}','${esc(u.display_name || u.email)}')">Reset PW</button>` : ''}
-    </div>`;
-  }).join('');
+document.getElementById('users-btn').addEventListener('click',async()=>{document.getElementById('users-modal').classList.remove('hidden');try{renderUsers(await api('/api/users'))}catch(e){toast(e.message,'error')}});
+async function createUser(){
+  const username=document.getElementById('nu-username').value.trim(),display_name=document.getElementById('nu-display').value.trim(),password=document.getElementById('nu-password').value,role=document.getElementById('nu-role').value;
+  if(!username||!display_name||!password){toast('All fields required','error');return}
+  try{await api('/api/users',{method:'POST',body:{username,display_name,password,role}});toast('User created','success');['nu-username','nu-display','nu-password'].forEach(id=>document.getElementById(id).value='');renderUsers(await api('/api/users'))}catch(e){toast(e.message,'error')}
 }
-
-async function toggleAdmin(uid, currentRole) {
-  try {
-    await api('/api/users/' + uid + '/role', {method:'PUT', body:{role: currentRole === 'admin' ? 'user' : 'admin'}});
-    toast('Role updated', 'success');
-    renderUsers(await api('/api/users'));
-  } catch (e) { toast('Error: ' + e.message, 'error'); }
+function renderUsers(users){
+  document.getElementById('user-count').textContent='('+users.length+')';
+  document.getElementById('users-list').innerHTML=users.map(u=>{const isMe=u.id===currentUser.id;const isA=u.role==='admin';return`<div class="user-row"><div class="user-avatar">${initials(u.display_name||u.username)}</div><div class="user-info-row"><div class="user-name">${esc(u.display_name)} ${isMe?'<span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:3px">(you)</span>':''}</div><div class="user-email">${esc(u.username)}</div></div><span class="status-badge" style="background:${isA?'#dbeafe':'#f3f4f6'};color:${isA?'#1e40af':'#6b7280'}">${isA?'Admin':'User'}</span>${!isMe?`<button class="sm" onclick="toggleAdmin('${u.id}','${u.role}')">${isA?'Remove Admin':'Make Admin'}</button><button class="sm" onclick="openResetPw('${u.id}','${esc(u.display_name)}')">Reset PW</button><button class="sm danger" onclick="deleteUser('${u.id}')">Delete</button>`:''}</div>`}).join('');
 }
+async function toggleAdmin(uid,role){try{await api('/api/users/'+uid+'/role',{method:'PUT',body:{role:role==='admin'?'user':'admin'}});toast('Updated','success');renderUsers(await api('/api/users'))}catch(e){toast(e.message,'error')}}
+async function deleteUser(uid){if(!confirm('Delete this user account?'))return;try{await api('/api/users/'+uid,{method:'DELETE'});toast('User deleted','success');renderUsers(await api('/api/users'))}catch(e){toast(e.message,'error')}}
 
-// ── Change Password (any logged-in user) ──
-document.getElementById('changepw-btn').addEventListener('click', () => {
-  document.getElementById('cp-current').value = '';
-  document.getElementById('cp-new').value = '';
-  document.getElementById('cp-confirm').value = '';
-  document.getElementById('cp-error').style.display = 'none';
-  document.getElementById('changepw-modal').classList.remove('hidden');
-});
+// ── Passwords ──
+document.getElementById('changepw-btn').addEventListener('click',()=>{['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');document.getElementById('cp-error').style.display='none';document.getElementById('changepw-modal').classList.remove('hidden')});
+async function changePassword(){const c=document.getElementById('cp-current').value,n=document.getElementById('cp-new').value,cf=document.getElementById('cp-confirm').value,err=document.getElementById('cp-error');err.style.display='none';if(!c||!n){err.textContent='All fields required';err.style.display='block';return}if(n!==cf){err.textContent='Passwords do not match';err.style.display='block';return}try{await api('/api/auth/change-password',{method:'POST',body:{currentPassword:c,newPassword:n}});closeModal('changepw-modal');toast('Password updated','success')}catch(e){err.textContent=e.message;err.style.display='block'}}
+let resetUserId=null;
+function openResetPw(uid,name){resetUserId=uid;document.getElementById('rp-username').textContent=name;['rp-new','rp-confirm'].forEach(id=>document.getElementById(id).value='');document.getElementById('rp-error').style.display='none';document.getElementById('resetpw-modal').classList.remove('hidden')}
+async function adminResetPw(){const n=document.getElementById('rp-new').value,cf=document.getElementById('rp-confirm').value,err=document.getElementById('rp-error');err.style.display='none';if(!n){err.textContent='Required';err.style.display='block';return}if(n!==cf){err.textContent='Passwords do not match';err.style.display='block';return}try{await api('/api/users/'+resetUserId+'/reset-password',{method:'POST',body:{newPassword:n}});closeModal('resetpw-modal');toast('Password reset','success')}catch(e){err.textContent=e.message;err.style.display='block'}}
 
-async function changePassword() {
-  const cur = document.getElementById('cp-current').value;
-  const np = document.getElementById('cp-new').value;
-  const conf = document.getElementById('cp-confirm').value;
-  const errEl = document.getElementById('cp-error');
-  errEl.style.display = 'none';
-  if (!cur || !np) { errEl.textContent = 'All fields required'; errEl.style.display = 'block'; return; }
-  if (np.length < 6) { errEl.textContent = 'New password must be at least 6 characters'; errEl.style.display = 'block'; return; }
-  if (np !== conf) { errEl.textContent = 'New passwords do not match'; errEl.style.display = 'block'; return; }
-  document.getElementById('cp-save-btn').textContent = 'Updating\u2026';
-  try {
-    await api('/api/auth/change-password', {method:'POST', body:{currentPassword:cur, newPassword:np}});
-    closeModal('changepw-modal');
-    toast('Password updated successfully', 'success');
-  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
-  document.getElementById('cp-save-btn').textContent = 'Update Password';
+// ── Quick-Info Popup ──
+function showQI(type,id){
+  const rec=type==='resource'?allResources.find(x=>x.id===id):allEmployees.find(x=>x.id===id);
+  if(!rec)return;
+
+  // Avatar
+  const avEl=document.getElementById('qi-avatar');
+  avEl.style.background=avatarColor(rec.name);
+  avEl.textContent=initials(rec.name);
+
+  // Name
+  document.getElementById('qi-name').textContent=rec.name||'\u2014';
+
+  // Body — key fields only
+  let rows='';
+  if(type==='resource'){
+    const sc=STATUS_COLORS[rec.contract_status]||{bg:'#f3f4f6',c:'#6b7280'};
+    rows+=qiRow('Status',`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(rec.contract_status||'\u2014')}</span>`);
+    rows+=qiRow('Client',esc(rec.client||'\u2014'));
+    rows+=qiRow('Vendor',esc(rec.vendor_name||'\u2014'));
+    rows+=qiRow('Start Date',fmtDate(rec.start_date)||'\u2014');
+    rows+=qiRow('End Date',fmtDate(rec.end_date)||'\u2014');
+  }else{
+    const sc=STATUS_COLORS[rec.status]||{bg:'#f3f4f6',c:'#6b7280'};
+    rows+=qiRow('Status',`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(rec.status||'\u2014')}</span>`);
+    rows+=qiRow('Job Title',esc(rec.title||'\u2014'));
+    rows+=qiRow('Department',esc(rec.department||'\u2014'));
+    rows+=qiRow('Email',esc(rec.email||'\u2014'));
+    rows+=qiRow('Phone',esc(rec.phone||'\u2014'));
+  }
+  document.getElementById('qi-body').innerHTML=rows;
+
+  // Full details link
+  document.getElementById('qi-full-link').href=`/detail?type=${type}&id=${id}`;
+
+  document.getElementById('qi-popup').classList.remove('hidden');
 }
+function qiRow(label,val){return`<div class="qi-row"><span class="qi-label">${label}</span><span class="qi-val">${val}</span></div>`}
+function closeQI(){document.getElementById('qi-popup').classList.add('hidden')}
 
-// ── Admin: Reset another user's password ──
-let resetUserId = null;
-function openResetPassword(uid, name) {
-  resetUserId = uid;
-  document.getElementById('rp-username').textContent = name;
-  document.getElementById('rp-new').value = '';
-  document.getElementById('rp-confirm').value = '';
-  document.getElementById('rp-error').style.display = 'none';
-  document.getElementById('resetpw-modal').classList.remove('hidden');
-}
-
-async function adminResetPassword() {
-  const np = document.getElementById('rp-new').value;
-  const conf = document.getElementById('rp-confirm').value;
-  const errEl = document.getElementById('rp-error');
-  errEl.style.display = 'none';
-  if (!np) { errEl.textContent = 'Password required'; errEl.style.display = 'block'; return; }
-  if (np.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.style.display = 'block'; return; }
-  if (np !== conf) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
-  document.getElementById('rp-save-btn').textContent = 'Resetting\u2026';
-  try {
-    await api('/api/users/' + resetUserId + '/reset-password', {method:'POST', body:{newPassword:np}});
-    closeModal('resetpw-modal');
-    toast('Password reset successfully', 'success');
-  } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
-  document.getElementById('rp-save-btn').textContent = 'Reset Password';
-}
-
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
-});
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden')}));
 </script>
 </body>
 </html>
