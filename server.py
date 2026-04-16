@@ -7,8 +7,10 @@ ReqRoute Directory — Python/Flask backend
   - Gross margin tracking
 """
 
-import os, json, sqlite3, uuid, re, time, threading, queue, secrets, functools
+import os, json, sqlite3, uuid, re, time, threading, queue, secrets, functools, csv, io
 from pathlib import Path
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
 from flask import Flask, request, jsonify, session, send_from_directory, Response
 import bcrypt
 
@@ -418,6 +420,63 @@ def delete_resource(eid):
     conn.commit(); conn.close()
     broadcast('data-change', {'action': 'delete', 'type': 'resource', 'id': eid})
     return jsonify(ok=True)
+
+@app.route('/api/gsheet/fetch', methods=['POST'])
+@rate_limit(max_requests=10)
+def fetch_gsheet():
+    """Fetch a Google Sheet as CSV and return parsed rows for column mapping."""
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin':
+        return jsonify(error='Admin access required'), 403
+    d = request.json or {}
+    url = (d.get('url') or '').strip()
+    if not url:
+        return jsonify(error='Google Sheet URL is required'), 400
+
+    # Extract sheet ID from various Google Sheets URL formats
+    sheet_id = None
+    m = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', url)
+    if m:
+        sheet_id = m.group(1)
+    if not sheet_id:
+        return jsonify(error='Invalid Google Sheets URL. Use the share link from Google Sheets.'), 400
+
+    # Extract gid (sheet tab) if present
+    gid = '0'
+    gid_match = re.search(r'[#&?]gid=(\d+)', url)
+    if gid_match:
+        gid = gid_match.group(1)
+
+    csv_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}'
+
+    try:
+        req = Request(csv_url, headers={
+            'User-Agent': 'Mozilla/5.0 ReqRoute/1.0'
+        })
+        response = urlopen(req, timeout=30)
+        raw = response.read().decode('utf-8-sig')
+    except HTTPError as e:
+        if e.code == 401 or e.code == 403:
+            return jsonify(error='Cannot access this sheet. Make sure sharing is set to "Anyone with the link" → Viewer.'), 403
+        return jsonify(error=f'Failed to fetch sheet (HTTP {e.code})'), 500
+    except URLError as e:
+        return jsonify(error=f'Network error: {str(e.reason)}'), 500
+    except Exception as e:
+        return jsonify(error=f'Failed to fetch: {str(e)}'), 500
+
+    # Parse CSV
+    try:
+        reader = csv.reader(io.StringIO(raw))
+        rows = list(reader)
+    except Exception as e:
+        return jsonify(error=f'Failed to parse CSV: {str(e)}'), 500
+
+    if len(rows) < 2:
+        return jsonify(error='Sheet appears empty (no data rows found)'), 400
+    if len(rows) > 5000:
+        rows = rows[:5001]  # header + 5000 data rows
+
+    return jsonify(headers=rows[0], rows=rows[1:], total=len(rows)-1)
 
 @app.route('/api/resources/import', methods=['POST'])
 def import_resources():

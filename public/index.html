@@ -259,18 +259,43 @@ td.muted{color:#9ca3af}
 <!-- IMPORT MODAL -->
 <div id="import-modal" class="modal-overlay hidden">
   <div class="modal modal-lg">
-    <h2>Import from Excel / CSV<button class="close-btn" onclick="closeModal('import-modal')">&#215;</button></h2>
-    <p style="font-size:13px;color:#6b7280;margin-bottom:.75rem">Upload a file to add or update records. Columns will be auto-mapped where possible.</p>
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <div style="font-size:24px">&#128194;</div><strong>Click to choose file</strong><p style="color:#6b7280;font-size:13px;margin-top:.25rem">.xlsx, .xls, .csv</p>
+    <h2>Import Data<button class="close-btn" onclick="closeModal('import-modal')">&#215;</button></h2>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:.75rem">Upload a file or paste a Google Sheet link. Columns will be auto-mapped where possible.</p>
+
+    <!-- Import source tabs -->
+    <div id="import-source-tabs" style="display:flex;gap:0;margin-bottom:1rem;border:1px solid #d0d5dd;border-radius:6px;overflow:hidden">
+      <button class="import-src-btn active" onclick="switchImportSource('file')" id="src-file-btn" style="flex:1;border:none;padding:8px;font-size:13px;font-weight:500;cursor:pointer;background:#1a2332;color:#fff">&#128194; Excel / CSV File</button>
+      <button class="import-src-btn" onclick="switchImportSource('gsheet')" id="src-gsheet-btn" style="flex:1;border:none;border-left:1px solid #d0d5dd;padding:8px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:#374151">&#128279; Google Sheet Link</button>
     </div>
-    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
+
+    <!-- File upload source -->
+    <div id="import-file-source">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:24px">&#128194;</div><strong>Click to choose file</strong><p style="color:#6b7280;font-size:13px;margin-top:.25rem">.xlsx, .xls, .csv</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" class="hidden">
+    </div>
+
+    <!-- Google Sheet source -->
+    <div id="import-gsheet-source" class="hidden">
+      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin-bottom:.5rem">
+        <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:4px">Google Sheet URL</label>
+        <input type="text" id="gsheet-url" placeholder="https://docs.google.com/spreadsheets/d/..." style="margin-bottom:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="primary sm" onclick="fetchGSheet()" id="gsheet-fetch-btn">Fetch Data</button>
+          <span id="gsheet-status" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        <p style="font-size:11px;color:#9ca3af;margin-top:8px">&#9432; The sheet must be shared as <strong>"Anyone with the link" &rarr; Viewer</strong></p>
+      </div>
+    </div>
+
+    <!-- Preview (shared by both sources) -->
     <div id="import-preview" class="hidden">
       <div id="col-mapping"></div>
       <div class="preview-table-wrap" id="preview-wrap"></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span id="preview-count" style="font-size:13px;color:#6b7280"></span>
-        <div style="display:flex;gap:8px"><button onclick="resetImport()">Different file</button><button class="primary" onclick="runImport()">Import all rows</button></div>
+        <div style="display:flex;gap:8px"><button onclick="resetImport()">Start Over</button><button class="primary" onclick="runImport()">Import all rows</button></div>
       </div>
     </div>
   </div>
@@ -752,12 +777,45 @@ function doExport(mode){
 }
 
 // ── Import ──
+let importSource='file';
 document.getElementById('import-btn').addEventListener('click',()=>{document.getElementById('import-modal').classList.remove('hidden');resetImport()});
 document.getElementById('file-input').addEventListener('change',e=>handleFile(e.target.files[0]));
 const dz=document.getElementById('drop-zone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+
+function switchImportSource(src){
+  importSource=src;
+  document.getElementById('src-file-btn').style.background=src==='file'?'#1a2332':'#fff';
+  document.getElementById('src-file-btn').style.color=src==='file'?'#fff':'#374151';
+  document.getElementById('src-gsheet-btn').style.background=src==='gsheet'?'#1a2332':'#fff';
+  document.getElementById('src-gsheet-btn').style.color=src==='gsheet'?'#fff':'#374151';
+  document.getElementById('import-file-source').classList.toggle('hidden',src!=='file');
+  document.getElementById('import-gsheet-source').classList.toggle('hidden',src!=='gsheet');
+  resetImport(true);
+}
+
+async function fetchGSheet(){
+  const url=document.getElementById('gsheet-url').value.trim();
+  if(!url){toast('Paste a Google Sheet URL','error');return}
+  const btn=document.getElementById('gsheet-fetch-btn');
+  const status=document.getElementById('gsheet-status');
+  btn.disabled=true;btn.textContent='Fetching...';status.textContent='';
+  try{
+    const r=await fetch('/api/gsheet/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Failed to fetch');
+    status.textContent=d.total+' rows fetched';
+    status.style.color='#065f46';
+    // Convert to same format as file import: array of arrays with header row first
+    importRows=[d.headers,...d.rows];
+    showPreview(importRows);
+    document.getElementById('import-gsheet-source').querySelector('.drop-zone,div')&&(document.getElementById('import-gsheet-source').style.display='none');
+  }catch(e){
+    status.textContent=e.message;status.style.color='#b91c1c';
+  }finally{btn.disabled=false;btn.textContent='Fetch Data'}
+}
 
 function handleFile(file){if(!file)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'binary'});const d=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});if(d.length<2){toast('Empty file','error');return}importRows=d;showPreview(d)};r.readAsBinaryString(file)}
 
@@ -785,7 +843,20 @@ async function runImport(){
   const endpoint=currentTab==='resources'?'/api/resources/import':'/api/employees/import';
   try{const r=await api(endpoint,{method:'POST',body:{rows:mapped}});closeModal('import-modal');toast(`Imported ${r.imported} records`,'success');await loadAllData()}catch(e){toast(e.message,'error')}
 }
-function resetImport(){importRows=[];document.getElementById('drop-zone').classList.remove('hidden');document.getElementById('import-preview').classList.add('hidden');document.getElementById('file-input').value=''}
+function resetImport(keepSource){
+  importRows=[];
+  document.getElementById('drop-zone').classList.remove('hidden');
+  document.getElementById('import-preview').classList.add('hidden');
+  document.getElementById('file-input').value='';
+  document.getElementById('gsheet-status').textContent='';
+  document.getElementById('import-gsheet-source').style.display='';
+  if(!keepSource){
+    document.getElementById('import-source-tabs').style.display='';
+    document.getElementById('import-file-source').classList.remove('hidden');
+    document.getElementById('import-gsheet-source').classList.add('hidden');
+    switchImportSource('file');
+  }
+}
 
 // ── Users ──
 document.getElementById('users-btn').addEventListener('click',async()=>{document.getElementById('users-modal').classList.remove('hidden');try{renderUsers(await api('/api/users'))}catch(e){toast(e.message,'error')}});
