@@ -173,23 +173,27 @@ _SCHEMA_STATEMENTS = [
     )''',
     '''CREATE TABLE IF NOT EXISTS resources (
         id TEXT PRIMARY KEY,
-        counter TEXT, s_no TEXT, month_added TEXT,
+        type TEXT,
         name TEXT NOT NULL,
+        client TEXT, project TEXT,
+        status TEXT DEFAULT 'Active',
+        start_date TEXT, end_date TEXT,
+        vendor_name TEXT, vendor_phone TEXT, vendor_email TEXT,
+        fe_rate_regular TEXT, be_rate_regular TEXT, gross_margin TEXT,
+        notes TEXT,
+        -- legacy columns kept for backwards-compat with old rows
+        counter TEXT, s_no TEXT, month_added TEXT,
         type_of_hire TEXT, skill_set TEXT,
         contractor_phone TEXT, contractor_email TEXT,
         jc_cats TEXT, candidate_cats TEXT, assignment_no TEXT,
-        start_date TEXT, end_date TEXT,
-        contract_status TEXT DEFAULT 'Active',
-        client TEXT, customer TEXT, client_contact TEXT,
+        contract_status TEXT,
+        customer TEXT, client_contact TEXT,
         client_employee_id TEXT, client_po_number TEXT,
         client_timesheet_cycle TEXT, client_payment_terms TEXT,
         invoicing_type TEXT, rate_type TEXT,
-        fe_rate_regular TEXT, fe_rate_ot TEXT,
-        be_rate_regular TEXT, be_rate_ot TEXT,
+        fe_rate_ot TEXT, be_rate_ot TEXT,
         expenses_paid TEXT, hc TEXT, hc_cost_month TEXT,
-        per_diem_rate TEXT, gross_margin TEXT,
-        vendor_name TEXT, vendor_email TEXT, vendor_phone TEXT,
-        notes TEXT,
+        per_diem_rate TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_by TEXT
@@ -210,6 +214,38 @@ _SCHEMA_STATEMENTS = [
     )'''
 ]
 
+def _get_existing_columns(conn, table):
+    if USE_POSTGRES:
+        rows = conn.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name=?",
+            (table,)
+        ).fetchall()
+        return {r['column_name'] for r in rows}
+    # SQLite
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return {r['name'] for r in rows}
+
+def _ensure_column(conn, table, col, decl):
+    if col not in _get_existing_columns(conn, table):
+        # No placeholders in DDL — safe because col/decl are hard-coded literals below
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+
+def migrate_resources(conn):
+    """Add simplified columns to resources table & copy from legacy columns."""
+    cols = _get_existing_columns(conn, 'resources')
+    if not cols:
+        return  # Table doesn't exist yet (schema create will handle it)
+    # Ensure new columns exist
+    _ensure_column(conn, 'resources', 'type', 'TEXT')
+    _ensure_column(conn, 'resources', 'project', 'TEXT')
+    _ensure_column(conn, 'resources', 'status', 'TEXT')
+    # Copy data from legacy columns where new ones are empty
+    if 'type_of_hire' in cols:
+        conn.execute("UPDATE resources SET type=type_of_hire WHERE (type IS NULL OR type='') AND type_of_hire IS NOT NULL AND type_of_hire<>''")
+    if 'contract_status' in cols:
+        conn.execute("UPDATE resources SET status=contract_status WHERE (status IS NULL OR status='') AND contract_status IS NOT NULL AND contract_status<>''")
+    conn.commit()
+
 def init_db():
     conn = get_db()
     if USE_POSTGRES:
@@ -218,6 +254,8 @@ def init_db():
         conn.commit()
     else:
         conn.executescript(';\n'.join(_SCHEMA_STATEMENTS) + ';')
+    # Run migration for existing tables (adds new columns + backfills)
+    migrate_resources(conn)
     # ── Create default accounts ──
     row = conn.execute('SELECT COUNT(*) as cnt FROM users').fetchone()
     existing = row['cnt'] if row else 0
@@ -409,12 +447,30 @@ def update_role(tid):
     return jsonify(ok=True)
 
 # ── Resources CRUD ──
-RESOURCE_COLS = ['counter','s_no','month_added','name','type_of_hire','skill_set','contractor_phone',
-    'contractor_email','jc_cats','candidate_cats','assignment_no','start_date','end_date','contract_status',
-    'client','customer','client_contact','client_employee_id','client_po_number','client_timesheet_cycle',
-    'client_payment_terms','invoicing_type','rate_type','fe_rate_regular','fe_rate_ot','be_rate_regular',
-    'be_rate_ot','expenses_paid','hc','hc_cost_month','per_diem_rate','gross_margin','vendor_name',
-    'vendor_email','vendor_phone','notes']
+# Unified 13-field schema (same fields for resources & employees)
+RESOURCE_COLS = ['type','name','client','project','status','start_date','end_date',
+    'vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular',
+    'gross_margin','notes']
+
+def _calc_gm_if_missing(vals):
+    """Preserve provided gross_margin; calculate only if absent."""
+    if vals.get('gross_margin'):
+        return
+    try:
+        bill = float(vals.get('fe_rate_regular') or 0)
+        pay = float(vals.get('be_rate_regular') or 0)
+        if bill or pay:
+            vals['gross_margin'] = str(round(bill - pay, 2))
+    except Exception:
+        pass
+
+def _signature(vals, cols):
+    """Stable signature for duplicate detection — normalized on all business fields."""
+    parts = []
+    for c in cols:
+        v = vals.get(c)
+        parts.append('' if v is None else str(v).strip().lower())
+    return '|'.join(parts)
 
 @app.route('/api/resources')
 def list_resources():
@@ -434,14 +490,7 @@ def add_resource():
     eid = str(uuid.uuid4())
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
-    # Auto-calculate gross margin only if not provided
-    if not vals.get('gross_margin'):
-        try:
-            bill = float(vals.get('fe_rate_regular') or 0)
-            pay = float(vals.get('be_rate_regular') or 0)
-            if bill or pay:
-                vals['gross_margin'] = str(round(bill - pay, 2))
-        except: pass
+    _calc_gm_if_missing(vals)
     conn = get_db()
     cols_str = ','.join(RESOURCE_COLS)
     placeholders = ','.join(['?'] * len(RESOURCE_COLS))
@@ -461,13 +510,7 @@ def update_resource(eid):
     if not d.get('name'): return jsonify(error='Name is required'), 400
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in RESOURCE_COLS}
-    if not vals.get('gross_margin'):
-        try:
-            bill = float(vals.get('fe_rate_regular') or 0)
-            pay = float(vals.get('be_rate_regular') or 0)
-            if bill or pay:
-                vals['gross_margin'] = str(round(bill - pay, 2))
-        except: pass
+    _calc_gm_if_missing(vals)
     sets = ','.join([f'{c}=?' for c in RESOURCE_COLS])
     conn = get_db()
     conn.execute(f"UPDATE resources SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
@@ -547,35 +590,7 @@ def fetch_gsheet():
 
 @app.route('/api/resources/import', methods=['POST'])
 def import_resources():
-    uid = require_auth()
-    if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
-    d = request.json or {}
-    rows = d.get('rows', [])
-    if len(rows) > 5000: return jsonify(error='Max 5000 rows'), 400
-    uname = get_display_name(uid)
-    conn = get_db()
-    cols_str = ','.join(RESOURCE_COLS)
-    placeholders = ','.join(['?'] * len(RESOURCE_COLS))
-    imported = 0
-    for r in rows:
-        if not r.get('name'): continue
-        vals = {c: sanitize_str(r.get(c)) for c in RESOURCE_COLS}
-        # Only calculate GM if not already provided in data
-        if not vals.get('gross_margin'):
-            try:
-                bill = float(vals.get('fe_rate_regular') or 0)
-                pay = float(vals.get('be_rate_regular') or 0)
-                if bill or pay:
-                    vals['gross_margin'] = str(round(bill - pay, 2))
-            except: pass
-        conn.execute(f'INSERT INTO resources (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
-                     [str(uuid.uuid4())] + [vals[c] for c in RESOURCE_COLS] + [uname])
-        imported += 1
-    conn.commit()
-    all_res = [dict(r) for r in conn.execute('SELECT * FROM resources ORDER BY name').fetchall()]
-    conn.close()
-    broadcast('data-change', {'action': 'reload', 'type': 'resource', 'records': all_res})
-    return jsonify(imported=imported)
+    return _do_import('resources', RESOURCE_COLS)
 
 # ── Employees CRUD ──
 EMP_COLS = ['type','name','client','project','status','start_date','end_date','vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular','gross_margin','notes']
@@ -598,13 +613,7 @@ def add_employee():
     eid = str(uuid.uuid4())
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
-    if not vals.get('gross_margin'):
-        try:
-            bill = float(vals.get('fe_rate_regular') or 0)
-            pay = float(vals.get('be_rate_regular') or 0)
-            if bill or pay:
-                vals['gross_margin'] = str(round(bill - pay, 2))
-        except: pass
+    _calc_gm_if_missing(vals)
     conn = get_db()
     cols_str = ','.join(EMP_COLS)
     placeholders = ','.join(['?'] * len(EMP_COLS))
@@ -624,13 +633,7 @@ def update_employee(eid):
     if not d.get('name'): return jsonify(error='Name is required'), 400
     uname = get_display_name(uid)
     vals = {c: sanitize_str(d.get(c)) for c in EMP_COLS}
-    if not vals.get('gross_margin'):
-        try:
-            bill = float(vals.get('fe_rate_regular') or 0)
-            pay = float(vals.get('be_rate_regular') or 0)
-            if bill or pay:
-                vals['gross_margin'] = str(round(bill - pay, 2))
-        except: pass
+    _calc_gm_if_missing(vals)
     sets = ','.join([f'{c}=?' for c in EMP_COLS])
     conn = get_db()
     conn.execute(f"UPDATE employees SET {sets},updated_at=datetime('now'),updated_by=? WHERE id=?",
@@ -653,34 +656,103 @@ def delete_employee(eid):
 
 @app.route('/api/employees/import', methods=['POST'])
 def import_employees():
+    return _do_import('employees', EMP_COLS)
+
+def _do_import(table, cols):
+    """Unified import handler with dedup + upsert support.
+
+    Request body:
+      - rows: list of row dicts
+      - mode: 'add' (default, skip exact duplicates)
+            | 'update' (only update matching name+client, skip if not found)
+            | 'replace' (delete all then insert)
+    Response: { imported, updated, skipped_duplicate, not_found, new_ids }
+    """
     uid = require_auth()
     if not uid or get_user_role(uid) != 'admin': return jsonify(error='Admin access required'), 403
-    rows = (request.json or {}).get('rows', [])
-    if len(rows) > 5000: return jsonify(error='Max 5000 rows'), 400
+    body = request.json or {}
+    rows = body.get('rows', [])
+    mode = body.get('mode', 'add')
+    if mode not in ('add', 'update', 'replace'):
+        mode = 'add'
+    if len(rows) > 5000:
+        return jsonify(error='Max 5000 rows'), 400
     uname = get_display_name(uid)
+    singular = 'resource' if table == 'resources' else 'employee'
+
     conn = get_db()
-    cols_str = ','.join(EMP_COLS)
-    placeholders = ','.join(['?'] * len(EMP_COLS))
+
+    if mode == 'replace':
+        conn.execute(f'DELETE FROM {table}')
+
+    # Preload existing rows for dedup / match lookups
+    existing = conn.execute(f'SELECT * FROM {table}').fetchall()
+    existing_by_sig = {}
+    existing_by_key = {}  # match key for upsert: name+client (lowercased)
+    for r in existing:
+        rd = dict(r)
+        existing_by_sig[_signature(rd, cols)] = rd['id']
+        key = f"{(rd.get('name') or '').strip().lower()}|{(rd.get('client') or '').strip().lower()}|{(rd.get('start_date') or '').strip()}"
+        existing_by_key[key] = rd['id']
+
+    cols_str = ','.join(cols)
+    placeholders = ','.join(['?'] * len(cols))
+    sets_sql = ','.join([f'{c}=?' for c in cols])
+
     imported = 0
+    updated = 0
+    skipped_duplicate = 0
+    not_found = 0
+    new_ids = []
+    seen_sigs_this_batch = set()
+
     for r in rows:
-        if not r.get('name'): continue
-        vals = {c: sanitize_str(r.get(c)) for c in EMP_COLS}
-        # Only calculate GM if not already provided in data
-        if not vals.get('gross_margin'):
-            try:
-                bill = float(vals.get('fe_rate_regular') or 0)
-                pay = float(vals.get('be_rate_regular') or 0)
-                if bill or pay:
-                    vals['gross_margin'] = str(round(bill - pay, 2))
-            except: pass
-        conn.execute(f'INSERT INTO employees (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
-                     [str(uuid.uuid4())] + [vals[c] for c in EMP_COLS] + [uname])
+        if not r.get('name'):
+            continue
+        vals = {c: sanitize_str(r.get(c)) for c in cols}
+        _calc_gm_if_missing(vals)
+        sig = _signature(vals, cols)
+        key = f"{(vals.get('name') or '').strip().lower()}|{(vals.get('client') or '').strip().lower()}|{(vals.get('start_date') or '').strip()}"
+
+        if mode == 'update':
+            # Only update existing matching records; do not insert new ones
+            target_id = existing_by_key.get(key)
+            if not target_id:
+                not_found += 1
+                continue
+            conn.execute(
+                f"UPDATE {table} SET {sets_sql}, updated_at=datetime('now'), updated_by=? WHERE id=?",
+                [vals[c] for c in cols] + [uname, target_id]
+            )
+            updated += 1
+            continue
+
+        # mode == 'add' (also post-replace)
+        # Skip exact duplicates (against existing DB AND against rows earlier in this batch)
+        if sig in existing_by_sig or sig in seen_sigs_this_batch:
+            skipped_duplicate += 1
+            continue
+        seen_sigs_this_batch.add(sig)
+        new_id = str(uuid.uuid4())
+        conn.execute(
+            f'INSERT INTO {table} (id,{cols_str},updated_by) VALUES (?,{placeholders},?)',
+            [new_id] + [vals[c] for c in cols] + [uname]
+        )
         imported += 1
+        new_ids.append(new_id)
+
     conn.commit()
-    all_emps = [dict(r) for r in conn.execute('SELECT * FROM employees ORDER BY name').fetchall()]
+    all_rows = [dict(r) for r in conn.execute(f'SELECT * FROM {table} ORDER BY name').fetchall()]
     conn.close()
-    broadcast('data-change', {'action': 'reload', 'type': 'employee', 'records': all_emps})
-    return jsonify(imported=imported)
+    broadcast('data-change', {'action': 'reload', 'type': singular, 'records': all_rows})
+    return jsonify(
+        imported=imported,
+        updated=updated,
+        skipped_duplicate=skipped_duplicate,
+        not_found=not_found,
+        new_ids=new_ids,
+        mode=mode,
+    )
 
 # ── Detail API (for new-tab view) ──
 @app.route('/api/resources/<eid>/detail')

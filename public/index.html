@@ -75,6 +75,10 @@ main{max-width:1400px;margin:0 auto;padding:1.5rem 1rem}
 .data-table thead th.sortable{cursor:pointer;user-select:none;transition:background .15s,color .15s}
 .data-table thead th.sortable:hover{background:#eef1f5;color:#1a2332}
 .data-table thead th.th-sorted{color:#1a2332;background:#eef1f5}
+.data-table tbody tr.row-flash{animation:rowFlash 4s ease-out}
+@keyframes rowFlash{0%{background:#fef3c7}70%{background:#fef9e7}100%{background:transparent}}
+.sm.ghost.danger{color:#b91c1c}
+.sm.ghost.danger:hover{background:#fee2e2;color:#991b1b}
 .data-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;white-space:nowrap;color:#374151;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .data-table tbody tr{transition:.1s}
 .data-table tbody tr:hover{background:#f8fafd}
@@ -292,9 +296,24 @@ td.muted{color:#9ca3af}
     <div id="import-preview" class="hidden">
       <div id="col-mapping"></div>
       <div class="preview-table-wrap" id="preview-wrap"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="margin-top:12px;padding:10px;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:6px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#374151">Import Mode</div>
+        <label style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px;font-size:12px;cursor:pointer">
+          <input type="radio" name="import-mode" value="add" checked>
+          <span><strong>Add new</strong> &mdash; skip rows that exactly match existing records</span>
+        </label>
+        <label style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px;font-size:12px;cursor:pointer">
+          <input type="radio" name="import-mode" value="update">
+          <span><strong>Update existing</strong> &mdash; match by Name + Client + Start Date, update only; no new rows added</span>
+        </label>
+        <label style="display:flex;gap:6px;align-items:flex-start;font-size:12px;cursor:pointer">
+          <input type="radio" name="import-mode" value="replace">
+          <span style="color:#b91c1c"><strong>Replace all</strong> &mdash; delete everything in this tab first, then import</span>
+        </label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
         <span id="preview-count" style="font-size:13px;color:#6b7280"></span>
-        <div style="display:flex;gap:8px"><button onclick="resetImport()">Start Over</button><button class="primary" onclick="runImport()">Import all rows</button></div>
+        <div style="display:flex;gap:8px"><button onclick="resetImport()">Start Over</button><button class="primary" onclick="runImport()">Run Import</button></div>
       </div>
     </div>
   </div>
@@ -364,39 +383,24 @@ let allResources=[],allEmployees=[],editingId=null,deleteId=null,importRows=[];
 let eventSource=null;
 let sortCol='name',sortDir='asc';  // click-to-sort state
 
-const RES_FIELDS=[
-  {k:'counter',l:'Counter'},{k:'s_no',l:'S No'},{k:'month_added',l:'Month Added'},
-  {k:'name',l:'Name',req:true},{k:'type_of_hire',l:'Type of Hire'},{k:'skill_set',l:'Skill Set'},
-  {k:'contractor_phone',l:'Contractor Phone'},{k:'contractor_email',l:'Contractor Email'},
-  {k:'jc_cats',l:'JC # - CATS'},{k:'candidate_cats',l:'Candidate # - CATS'},{k:'assignment_no',l:'Assignment #'},
-  {k:'start_date',l:'Start Date',t:'date'},{k:'end_date',l:'End Date',t:'date'},
-  {k:'contract_status',l:'Contract Status',t:'sel',opts:['Open','Active','On Assignment','Available','Ended','Closed']},
-  {k:'client',l:'Client'},{k:'customer',l:'Customer (If Any)'},{k:'client_contact',l:'Client Contact'},
-  {k:'client_employee_id',l:'Client Employee ID'},{k:'client_po_number',l:'Client PO Number'},
-  {k:'client_timesheet_cycle',l:'Client Timesheet Cycle'},{k:'client_payment_terms',l:'Client Payment Terms'},
-  {k:'invoicing_type',l:'Invoicing Type',t:'sel',opts:['Manual','Automatic']},
-  {k:'rate_type',l:'Rate Type'},{k:'fe_rate_regular',l:'FE Rate (Regular) $/hr'},
-  {k:'fe_rate_ot',l:'FE Rate (OT) $/hr'},{k:'be_rate_regular',l:'BE Rate (Regular) $/hr'},
-  {k:'be_rate_ot',l:'BE Rate (OT) $/hr'},{k:'expenses_paid',l:'Expenses Paid',t:'sel',opts:['Y','N']},
-  {k:'hc',l:'HC',t:'sel',opts:['Y','N']},{k:'hc_cost_month',l:'HC Cost/Month'},
-  {k:'per_diem_rate',l:'Per Diem Rate'},{k:'vendor_name',l:'Vendor Name'},
-  {k:'vendor_email',l:'Vendor Email'},{k:'vendor_phone',l:'Vendor Phone'},
-  {k:'notes',l:'Notes',t:'ta',full:true}
-];
-const EMP_FIELDS=[
+// Unified 13-field schema for both Resources and Internal Employees
+const UNIFIED_FIELDS=[
   {k:'type',l:'Type'},{k:'name',l:'Full Name',req:true},{k:'client',l:'Client'},
-  {k:'project',l:'Project'},{k:'status',l:'Status',t:'sel',opts:['Active','On Leave','Inactive','Open','Ended','Closed']},
+  {k:'project',l:'Project'},{k:'status',l:'Status',t:'sel',opts:['Active','On Assignment','Available','Open','On Leave','Inactive','Ended','Closed']},
   {k:'start_date',l:'Start Date',t:'date'},{k:'end_date',l:'End Date',t:'date'},
   {k:'vendor_name',l:'Vendor Name'},{k:'vendor_phone',l:'Vendor Phone'},{k:'vendor_email',l:'Vendor Email'},
   {k:'fe_rate_regular',l:'Bill Rate'},{k:'be_rate_regular',l:'Pay Rate'},
   {k:'gross_margin',l:'Gross Margin'},
   {k:'notes',l:'Notes',t:'ta',full:true}
 ];
+const RES_FIELDS=UNIFIED_FIELDS;
+const EMP_FIELDS=UNIFIED_FIELDS;
 
-const RES_DEFAULT_COLS=['name','start_date','end_date','contract_status','type_of_hire','client','vendor_name','vendor_phone','vendor_email','contractor_phone','contractor_email','fe_rate_regular','be_rate_regular','gross_margin'];
-const EMP_DEFAULT_COLS=['type','name','client','project','status','start_date','end_date','vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular','gross_margin'];
-const RES_ALL_LIST_COLS=RES_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k).concat(['gross_margin']);
-const EMP_ALL_LIST_COLS=EMP_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k);
+const DEFAULT_COLS=['type','name','client','project','status','start_date','end_date','vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular','gross_margin'];
+const RES_DEFAULT_COLS=DEFAULT_COLS;
+const EMP_DEFAULT_COLS=DEFAULT_COLS;
+const RES_ALL_LIST_COLS=UNIFIED_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k);
+const EMP_ALL_LIST_COLS=UNIFIED_FIELDS.filter(f=>f.k!=='notes').map(f=>f.k);
 
 let visibleResCols=[...RES_DEFAULT_COLS];
 let visibleEmpCols=[...EMP_DEFAULT_COLS];
@@ -406,7 +410,7 @@ RES_FIELDS.forEach(f=>COL_LABELS[f.k]=f.l);
 EMP_FIELDS.forEach(f=>COL_LABELS[f.k]=f.l);
 COL_LABELS['gross_margin']='Gross Margin';
 
-const SHORT_LABELS={'contractor_phone':'Phone','contractor_email':'Email','vendor_phone':'V.Phone','vendor_email':'V.Email','fe_rate_regular':'Bill Rate','be_rate_regular':'Pay Rate','gross_margin':'GM','contract_status':'Status','type_of_hire':'Type','start_date':'Start','end_date':'End','vendor_name':'Vendor'};
+const SHORT_LABELS={'vendor_phone':'V.Phone','vendor_email':'V.Email','fe_rate_regular':'Bill Rate','be_rate_regular':'Pay Rate','gross_margin':'GM','start_date':'Start','end_date':'End','vendor_name':'Vendor'};
 
 const STATUS_COLORS={Open:{bg:'#d1fae5',c:'#065f46'},Active:{bg:'#d1fae5',c:'#065f46'},'On Assignment':{bg:'#dbeafe',c:'#1e40af'},Available:{bg:'#e0f2fe',c:'#0369a1'},Ended:{bg:'#fee2e2',c:'#b91c1c'},Closed:{bg:'#fee2e2',c:'#b91c1c'},'On Leave':{bg:'#fef3c7',c:'#92400e'},Inactive:{bg:'#f3f4f6',c:'#6b7280'}};
 const ACTIVE_STATUSES=['Open','Active','On Assignment'];
@@ -489,11 +493,20 @@ function getGM(r){
   const b=parseFloat(r.fe_rate_regular)||0,p=parseFloat(r.be_rate_regular)||0;
   return(b||p)?b-p:0;
 }
+function dedupeRecords(list){
+  const seen=new Set();
+  return list.filter(r=>{
+    const sig=[r.name,r.client,r.project,r.start_date,r.end_date,r.fe_rate_regular,r.be_rate_regular,r.gross_margin,r.status]
+      .map(v=>String(v||'').trim().toLowerCase()).join('|');
+    if(seen.has(sig))return false;
+    seen.add(sig);return true;
+  });
+}
 function updateGM(){
-  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+  const active=dedupeRecords(allResources.filter(r=>ACTIVE_STATUSES.includes(r.status)));
   let total=0;active.forEach(r=>{total+=getGM(r)});
   document.getElementById('gm-total').textContent='$'+total.toFixed(2);
-  document.getElementById('gm-detail').textContent=`(${active.length} active resource${active.length!==1?'s':''})`;
+  document.getElementById('gm-detail').textContent=`(${active.length} unique active resource${active.length!==1?'s':''})`;
   document.getElementById('gm-strip').classList.toggle('hidden',currentTab!=='resources');
 }
 
@@ -525,7 +538,7 @@ document.getElementById('search-input').addEventListener('input',renderList);
 document.getElementById('filter-status').addEventListener('change',renderList);
 
 function updateStatusFilter(){
-  const opts=currentTab==='resources'?['Open','Active','On Assignment','Available','Ended','Closed']:['Active','On Leave','Inactive','Open','Ended','Closed'];
+  const opts=['Active','On Assignment','Available','Open','On Leave','Inactive','Ended','Closed'];
   document.getElementById('filter-status').innerHTML='<option value="">All Status</option>'+opts.map(o=>`<option>${o}</option>`).join('');
 }
 updateStatusFilter();
@@ -534,7 +547,7 @@ function getFiltered(){
   const q=document.getElementById('search-input').value.toLowerCase();
   const st=document.getElementById('filter-status').value;
   let list=currentTab==='resources'?[...allResources]:[...allEmployees];
-  const statusKey=currentTab==='resources'?'contract_status':'status';
+  const statusKey='status';
   if(q)list=list.filter(e=>Object.values(e).some(v=>String(v||'').toLowerCase().includes(q)));
   if(st)list=list.filter(e=>e[statusKey]===st);
   // Sort by clicked column
@@ -558,7 +571,7 @@ function cellHTML(rec,k){
   }
   if(k==='fe_rate_regular'||k==='be_rate_regular'||k==='fe_rate_ot'||k==='be_rate_ot'){const v=parseFloat(rec[k]);return isNaN(v)?'\u2014':'$'+v.toFixed(0)}
   if(k==='start_date'||k==='end_date')return fmtDate(rec[k])||'\u2014';
-  if(k==='contract_status'||k==='status'){const val=rec[k]||'\u2014';const sc=STATUS_COLORS[val]||{bg:'#f3f4f6',c:'#6b7280'};return`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(val)}</span>`}
+  if(k==='status'){const val=rec.status||'\u2014';const sc=STATUS_COLORS[val]||{bg:'#f3f4f6',c:'#6b7280'};return`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(val)}</span>`}
   return esc(rec[k]||'\u2014');
 }
 
@@ -594,11 +607,11 @@ function renderList(){
           return`<td><a class="name-link" href="javascript:void(0)" onclick="showQI('${type}','${rec.id}');event.stopPropagation()"><div class="avatar" style="background:${av}">${initials(rec.name)}</div>${esc(rec.name||'\u2014')}</a></td>`;
         }
         const isGm=k==='gross_margin';
-        const isMuted=['contractor_phone','contractor_email','vendor_phone','vendor_email','start_date','end_date','type_of_hire','location','phone','manager','department'].includes(k);
+        const isMuted=['vendor_phone','vendor_email','start_date','end_date','type','project'].includes(k);
         return`<td class="${isGm?'gm-cell':''}${isMuted?' muted':''}">${cellHTML(rec,k)}</td>`;
       }).join('');
-      const actBtn=isAdmin?`<td><button class="sm ghost" onclick="openEdit('${rec.id}');event.stopPropagation()">Edit</button></td>`:'';
-      return`<tr>${cells}${actBtn}</tr>`;
+      const actBtn=isAdmin?`<td><div style="display:flex;gap:4px"><button class="sm ghost" onclick="openEdit('${rec.id}');event.stopPropagation()">Edit</button><button class="sm ghost danger" title="Delete" onclick="quickDelete('${type}','${rec.id}');event.stopPropagation()">&#215;</button></div></td>`:'';
+      return`<tr data-id="${rec.id}">${cells}${actBtn}</tr>`;
     }).join('');
   }
 
@@ -607,7 +620,7 @@ function renderList(){
 
 // ── GM Analysis Tab ──
 function renderGMAnalysis(){
-  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.status));
 
   // Gather all months from start_date
   const months=new Set();
@@ -628,15 +641,20 @@ function renderGMAnalysis(){
   const monthStart=new Date(yr,mn-1,1);
   const monthEnd=new Date(yr,mn,0);
 
-  const inMonth=allResources.filter(r=>{
-    if(r.contract_status==='Ended'||r.contract_status==='Closed'){
-      // Only include if it ended during or after this month and started before or during
-    }
+  const inMonthRaw=allResources.filter(r=>{
     const sd=r.start_date?new Date(r.start_date):null;
     const ed=r.end_date?new Date(r.end_date):null;
     if(sd&&sd>monthEnd)return false;
     if(ed&&ed<monthStart)return false;
     return true;
+  });
+  // Dedupe: unique by name + client + project + start_date + rates + status
+  const seenSigs=new Set();
+  const inMonth=inMonthRaw.filter(r=>{
+    const sig=[r.name,r.client,r.project,r.start_date,r.end_date,r.fe_rate_regular,r.be_rate_regular,r.gross_margin,r.status]
+      .map(v=>String(v||'').trim().toLowerCase()).join('|');
+    if(seenSigs.has(sig))return false;
+    seenSigs.add(sig);return true;
   });
 
   let totalGM=0,totalBill=0,totalPay=0;
@@ -673,11 +691,11 @@ function renderGMAnalysis(){
       const b=parseFloat(r.fe_rate_regular)||0;
       const p=parseFloat(r.be_rate_regular)||0;
       const gm=getGM(r);
-      const sc=STATUS_COLORS[r.contract_status]||{bg:'#f3f4f6',c:'#6b7280'};
+      const sc=STATUS_COLORS[r.status]||{bg:'#f3f4f6',c:'#6b7280'};
       html+=`<tr>
         <td><a class="name-link" href="javascript:void(0)" onclick="showQI('resource','${r.id}')">${esc(r.name)}</a></td>
         <td>${esc(r.client||'\u2014')}</td>
-        <td><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(r.contract_status||'\u2014')}</span></td>
+        <td><span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(r.status||'\u2014')}</span></td>
         <td class="muted">${fmtDate(r.start_date)||'\u2014'}</td>
         <td class="muted">${fmtDate(r.end_date)||'\u2014'}</td>
         <td>$${b.toFixed(0)}</td>
@@ -695,7 +713,7 @@ function renderGMAnalysis(){
 }
 
 function updateStats(){
-  const actRes=allResources.filter(r=>ACTIVE_STATUSES.includes(r.contract_status));
+  const actRes=allResources.filter(r=>ACTIVE_STATUSES.includes(r.status));
   document.getElementById('stat-int').textContent=allEmployees.length;
   document.getElementById('stat-int-active').textContent=allEmployees.filter(e=>e.status==='Active').length+' active';
   document.getElementById('stat-res').textContent=allResources.length;
@@ -756,6 +774,14 @@ async function saveRecord(){
   document.getElementById('save-btn').textContent='Save';
 }
 
+async function quickDelete(type,id){
+  const list=type==='resource'?allResources:allEmployees;
+  const rec=list.find(x=>x.id===id);
+  if(!rec)return;
+  if(!confirm(`Delete "${rec.name}"? This cannot be undone.`))return;
+  const endpoint=type==='resource'?'/api/resources/':'/api/employees/';
+  try{await api(endpoint+id,{method:'DELETE'});toast('Deleted','success');await loadAllData()}catch(e){toast(e.message,'error')}
+}
 function confirmDelete(){deleteId=editingId;document.getElementById('del-modal').classList.remove('hidden')}
 document.getElementById('confirm-del-btn').addEventListener('click',async()=>{if(!deleteId)return;const endpoint=currentTab==='resources'?'/api/resources':'/api/employees';try{await api(endpoint+'/'+deleteId,{method:'DELETE'});closeModal('del-modal');closeModal('emp-modal');toast('Deleted','success');await loadAllData()}catch(e){toast(e.message,'error')}deleteId=null});
 
@@ -764,7 +790,7 @@ function doExport(mode){
   document.getElementById('export-dropdown').classList.remove('open');
   const list=getFiltered();if(!list.length){toast('No records');return}
   let cols,headers;
-  if(mode==='all'){cols=currentTab==='resources'?RES_FIELDS.map(f=>f.k).concat(['gross_margin']):EMP_FIELDS.map(f=>f.k);headers=currentTab==='resources'?RES_FIELDS.map(f=>f.l).concat(['Gross Margin']):EMP_FIELDS.map(f=>f.l)}
+  if(mode==='all'){cols=UNIFIED_FIELDS.map(f=>f.k);headers=UNIFIED_FIELDS.map(f=>f.l)}
   else{cols=currentTab==='resources'?visibleResCols:visibleEmpCols;headers=cols.map(k=>COL_LABELS[k]||k)}
   const rows=list.map(r=>cols.map(k=>rawCellValue(r,k)));
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
@@ -819,9 +845,24 @@ function handleFile(file){if(!file)return;const r=new FileReader();r.onload=e=>{
 function fuzzyMatch(header,fieldKey){
   const h=header.toLowerCase().replace(/[^a-z0-9]/g,''),fk=fieldKey.replace(/_/g,'');
   if(h===fk)return true;
-  const aliases={name:['name','resourcename','fullname','employeename','contractorname'],fe_rate_regular:['feratregular','ferate','billrate','billingrate','feregular'],be_rate_regular:['beratregular','berate','payrate','beregular'],contractor_phone:['contractorphone','phone','contactnumber','contractorcontactnumber'],contractor_email:['contractoremail','email','contractoremailaddress'],contract_status:['contractstatus','status'],type_of_hire:['typeofhire','hiretype','type'],vendor_name:['vendorname','vendor'],vendor_phone:['vendorcontactnumber','vendorphone'],vendor_email:['vendorcontactemail','vendoremail'],start_date:['startdate','start'],end_date:['enddate','end'],client:['client','clientname'],skill_set:['skillset','skills','skill'],assignment_no:['assignmentno','assignment','assignmentnumber'],jc_cats:['jccats','jc'],candidate_cats:['candidatecats','candidate'],hc_cost_month:['hccostmonth','hccost'],per_diem_rate:['perdiemrate','perdiem'],client_timesheet_cycle:['clienttimesheetcycle','timesheetcycle'],client_payment_terms:['clientpaymentterms','paymentterms'],invoicing_type:['invoicingtype','invoicing'],client_employee_id:['clientemployeeid'],client_po_number:['clientponumber','ponumber'],client_contact:['clientcontact'],month_added:['monthadded','month'],expenses_paid:['expensespaid','expenses'],rate_type:['ratetype']};
+  const aliases={
+    name:['name','resourcename','fullname','employeename','contractorname','empname'],
+    type:['type','typeofhire','hiretype','empltype','employeetype','emptype'],
+    client:['client','clientname','customer','account'],
+    project:['project','projectname','assignment','assignmentname'],
+    status:['status','contractstatus','empstatus','state'],
+    start_date:['startdate','start','starton','startingdate','joindate'],
+    end_date:['enddate','end','endon','endingdate','termdate'],
+    vendor_name:['vendorname','vendor','supplier','vendorcompany'],
+    vendor_phone:['vendorcontactnumber','vendorphone','vendorcontact'],
+    vendor_email:['vendorcontactemail','vendoremail'],
+    fe_rate_regular:['feratregular','ferate','billrate','billingrate','feregular','clientrate','clientbillrate','rate'],
+    be_rate_regular:['beratregular','berate','payrate','beregular','vendorrate','contractorrate','costrate'],
+    gross_margin:['grossmargin','gm','margin','gmhour','gmperhour','marginperhour','profit','profitmargin'],
+    notes:['notes','note','comments','remarks','description']
+  };
   const list=aliases[fieldKey]||[];
-  return list.includes(h)||h.includes(fk);
+  return list.includes(h)||(fk.length>=4&&h.includes(fk));
 }
 
 function showPreview(data){
@@ -834,11 +875,35 @@ function showPreview(data){
   document.getElementById('drop-zone').classList.add('hidden');
 }
 
+let lastNewIds=[];
 async function runImport(){
   const fields=currentTab==='resources'?RES_FIELDS:EMP_FIELDS;
-  const mapped=importRows.slice(1).map(row=>{const d={};fields.filter(f=>f.k!=='notes').forEach(f=>{const sel=document.getElementById('map_'+f.k);if(sel&&sel.value!=='')d[f.k]=String(row[parseInt(sel.value)]||'').trim()});return d}).filter(d=>d.name);
+  // Include ALL fields (including 'notes') so full signature can dedup
+  const mapped=importRows.slice(1).map(row=>{const d={};fields.forEach(f=>{const sel=document.getElementById('map_'+f.k);if(sel&&sel.value!=='')d[f.k]=String(row[parseInt(sel.value)]||'').trim()});return d}).filter(d=>d.name);
+  const mode=(document.querySelector('input[name="import-mode"]:checked')||{value:'add'}).value;
+  if(mode==='replace'&&!confirm('This will DELETE all existing records in this tab before importing. Continue?'))return;
   const endpoint=currentTab==='resources'?'/api/resources/import':'/api/employees/import';
-  try{const r=await api(endpoint,{method:'POST',body:{rows:mapped}});closeModal('import-modal');toast(`Imported ${r.imported} records`,'success');await loadAllData()}catch(e){toast(e.message,'error')}
+  try{
+    const r=await api(endpoint,{method:'POST',body:{rows:mapped,mode}});
+    closeModal('import-modal');
+    const parts=[];
+    if(r.imported)parts.push(r.imported+' added');
+    if(r.updated)parts.push(r.updated+' updated');
+    if(r.skipped_duplicate)parts.push(r.skipped_duplicate+' duplicate'+(r.skipped_duplicate===1?'':'s')+' skipped');
+    if(r.not_found)parts.push(r.not_found+' not found');
+    toast(parts.length?parts.join(' · '):'No changes','success');
+    lastNewIds=r.new_ids||[];
+    await loadAllData();
+    // Flash-highlight new rows
+    if(lastNewIds.length){
+      setTimeout(()=>{
+        lastNewIds.forEach(id=>{
+          const tr=document.querySelector('tr[data-id="'+id+'"]');
+          if(tr){tr.classList.add('row-flash');setTimeout(()=>tr.classList.remove('row-flash'),4000)}
+        });
+      },100);
+    }
+  }catch(e){toast(e.message,'error')}
 }
 function resetImport(keepSource){
   importRows=[];
@@ -891,17 +956,12 @@ function showQI(type,id){
 
   // Body — key fields only
   let rows='';
-  if(type==='resource'){
-    const sc=STATUS_COLORS[rec.contract_status]||{bg:'#f3f4f6',c:'#6b7280'};
-    rows+=qiRow('Status',`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(rec.contract_status||'\u2014')}</span>`);
-    rows+=qiRow('Client',esc(rec.client||'\u2014'));
-    rows+=qiRow('Vendor',esc(rec.vendor_name||'\u2014'));
-    rows+=qiRow('Start Date',fmtDate(rec.start_date)||'\u2014');
-    rows+=qiRow('End Date',fmtDate(rec.end_date)||'\u2014');
-  }else{
+  {
     const sc=STATUS_COLORS[rec.status]||{bg:'#f3f4f6',c:'#6b7280'};
     rows+=qiRow('Status',`<span class="status-badge" style="background:${sc.bg};color:${sc.c}">${esc(rec.status||'\u2014')}</span>`);
+    rows+=qiRow('Type',esc(rec.type||'\u2014'));
     rows+=qiRow('Client',esc(rec.client||'\u2014'));
+    rows+=qiRow('Project',esc(rec.project||'\u2014'));
     rows+=qiRow('Vendor',esc(rec.vendor_name||'\u2014'));
     rows+=qiRow('Start Date',fmtDate(rec.start_date)||'\u2014');
     rows+=qiRow('End Date',fmtDate(rec.end_date)||'\u2014');
