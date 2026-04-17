@@ -238,7 +238,7 @@ sse_queues = []
 sse_lock = threading.Lock()
 
 def broadcast(event, data):
-    msg = f"event: {event}\ndata: {json.dumps(data)}\n\n"
+    msg = f"event: {event}\ndata: {json.dumps(data, default=str)}\n\n"
     with sse_lock:
         dead = []
         for q in sse_queues:
