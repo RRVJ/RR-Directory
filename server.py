@@ -592,6 +592,14 @@ def fetch_gsheet():
 def import_resources():
     return _do_import('resources', RESOURCE_COLS)
 
+@app.route('/api/resources/delete-all', methods=['POST'])
+def delete_all_resources():
+    return _do_delete_all('resources', 'resource')
+
+@app.route('/api/resources/dedupe', methods=['POST'])
+def dedupe_resources():
+    return _do_dedupe('resources', 'resource', RESOURCE_COLS)
+
 # ── Employees CRUD ──
 EMP_COLS = ['type','name','client','project','status','start_date','end_date','vendor_name','vendor_phone','vendor_email','fe_rate_regular','be_rate_regular','gross_margin','notes']
 
@@ -657,6 +665,51 @@ def delete_employee(eid):
 @app.route('/api/employees/import', methods=['POST'])
 def import_employees():
     return _do_import('employees', EMP_COLS)
+
+@app.route('/api/employees/delete-all', methods=['POST'])
+def delete_all_employees():
+    return _do_delete_all('employees', 'employee')
+
+@app.route('/api/employees/dedupe', methods=['POST'])
+def dedupe_employees():
+    return _do_dedupe('employees', 'employee', EMP_COLS)
+
+def _do_delete_all(table, singular):
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin':
+        return jsonify(error='Admin access required'), 403
+    conn = get_db()
+    count = conn.execute(f'SELECT COUNT(*) as cnt FROM {table}').fetchone()['cnt']
+    conn.execute(f'DELETE FROM {table}')
+    conn.commit()
+    conn.close()
+    broadcast('data-change', {'action': 'reload', 'type': singular, 'records': []})
+    return jsonify(deleted=count)
+
+def _do_dedupe(table, singular, cols):
+    """Delete duplicate rows, keeping the oldest (earliest created_at) of each group."""
+    uid = require_auth()
+    if not uid or get_user_role(uid) != 'admin':
+        return jsonify(error='Admin access required'), 403
+    conn = get_db()
+    rows = [dict(r) for r in conn.execute(
+        f'SELECT * FROM {table} ORDER BY created_at ASC, id ASC'
+    ).fetchall()]
+    seen_sigs = {}
+    to_delete = []
+    for r in rows:
+        sig = _signature(r, cols)
+        if sig in seen_sigs:
+            to_delete.append(r['id'])
+        else:
+            seen_sigs[sig] = r['id']
+    for rid in to_delete:
+        conn.execute(f'DELETE FROM {table} WHERE id=?', (rid,))
+    conn.commit()
+    all_rows = [dict(r) for r in conn.execute(f'SELECT * FROM {table} ORDER BY name').fetchall()]
+    conn.close()
+    broadcast('data-change', {'action': 'reload', 'type': singular, 'records': all_rows})
+    return jsonify(removed=len(to_delete), remaining=len(all_rows))
 
 def _do_import(table, cols):
     """Unified import handler with dedup + upsert support.

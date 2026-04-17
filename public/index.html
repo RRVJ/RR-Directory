@@ -239,6 +239,13 @@ td.muted{color:#9ca3af}
           <button onclick="doExport('all')">All Fields</button>
         </div>
       </div>
+      <div class="export-wrap admin-only hidden" id="bulk-wrap">
+        <button id="bulk-btn" class="sm" onclick="toggleBulkDropdown()" title="Bulk actions">&#8942;</button>
+        <div class="export-dropdown" id="bulk-dropdown">
+          <button onclick="bulkDedupe()">Remove Duplicates</button>
+          <button onclick="bulkDeleteAll()" style="color:#b91c1c">Delete All</button>
+        </div>
+      </div>
       <button id="add-btn" class="primary sm admin-only hidden">+ Add</button>
     </div>
 
@@ -520,7 +527,26 @@ function buildColDropdown(){
 function toggleCol(k,show){const vis=currentTab==='resources'?visibleResCols:visibleEmpCols;if(show&&!vis.includes(k))vis.push(k);else if(!show){const i=vis.indexOf(k);if(i>=0)vis.splice(i,1)}renderList()}
 function toggleColDropdown(){buildColDropdown();document.getElementById('col-dropdown').classList.toggle('open')}
 function toggleExportDropdown(){document.getElementById('export-dropdown').classList.toggle('open')}
-document.addEventListener('click',e=>{if(!e.target.closest('.col-toggle-wrap'))document.getElementById('col-dropdown').classList.remove('open');if(!e.target.closest('.export-wrap'))document.getElementById('export-dropdown').classList.remove('open')});
+function toggleBulkDropdown(){document.getElementById('bulk-dropdown').classList.toggle('open')}
+async function bulkDeleteAll(){
+  document.getElementById('bulk-dropdown').classList.remove('open');
+  const label=currentTab==='resources'?'Resources':'Internal Employees';
+  const list=currentTab==='resources'?allResources:allEmployees;
+  if(!list.length){toast('Nothing to delete');return}
+  if(!confirm(`Delete ALL ${list.length} ${label}? This cannot be undone.`))return;
+  if(!confirm(`Really delete all ${list.length} records? Last chance.`))return;
+  const endpoint=currentTab==='resources'?'/api/resources/delete-all':'/api/employees/delete-all';
+  try{const r=await api(endpoint,{method:'POST'});toast(`Deleted ${r.deleted} records`,'success');await loadAllData()}catch(e){toast(e.message,'error')}
+}
+async function bulkDedupe(){
+  document.getElementById('bulk-dropdown').classList.remove('open');
+  const list=currentTab==='resources'?allResources:allEmployees;
+  if(!list.length){toast('Nothing to dedupe');return}
+  if(!confirm('Scan for exact duplicate rows and delete them? The oldest copy of each will be kept.'))return;
+  const endpoint=currentTab==='resources'?'/api/resources/dedupe':'/api/employees/dedupe';
+  try{const r=await api(endpoint,{method:'POST'});toast(r.removed?`Removed ${r.removed} duplicate${r.removed===1?'':'s'} · ${r.remaining} remain`:'No duplicates found','success');await loadAllData()}catch(e){toast(e.message,'error')}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.col-toggle-wrap'))document.getElementById('col-dropdown').classList.remove('open');if(!e.target.closest('#export-btn')&&!e.target.closest('#export-dropdown'))document.getElementById('export-dropdown').classList.remove('open');if(!e.target.closest('#bulk-btn')&&!e.target.closest('#bulk-dropdown'))document.getElementById('bulk-dropdown').classList.remove('open')});
 
 // ── Tabs ──
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
