@@ -24,7 +24,9 @@ if env_path.exists():
             os.environ.setdefault(k.strip(), v.strip())
 
 PORT = int(os.environ.get('PORT', 3000))
-DB_PATH = Path(__file__).parent / 'reqroute.db'
+# Use /data (Render persistent disk) if available, otherwise local
+_data_dir = Path('/data') if Path('/data').exists() else Path(__file__).parent
+DB_PATH = _data_dir / 'reqroute.db'
 
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.secret_key = os.environ.get('SESSION_SECRET', secrets.token_hex(32))
