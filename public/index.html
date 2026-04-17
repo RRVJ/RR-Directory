@@ -645,36 +645,57 @@ function renderList(){
 }
 
 // ── GM Analysis Tab ──
-function renderGMAnalysis(){
-  const active=allResources.filter(r=>ACTIVE_STATUSES.includes(r.status));
+// Robust date parser — handles ISO, US (M/D/Y), and Excel-like formats
+function parseDateSafe(v){
+  if(!v)return null;
+  if(v instanceof Date)return isNaN(v)?null:v;
+  const s=String(v).trim();
+  if(!s)return null;
+  // Try native parse first (handles ISO, 'Jan 1 2025', '1/1/2025' in most locales)
+  let d=new Date(s);
+  if(!isNaN(d))return d;
+  // Try YYYY-MM-DD
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3]);
+  // Try M/D/YYYY or M-D-YYYY
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){const y=+m[3];return new Date(y<100?2000+y:y,+m[1]-1,+m[2])}
+  return null;
+}
 
-  // Gather all months from start_date
+function renderGMAnalysis(){
+  // Gather all months from resources' start_date / end_date plus ±12 months around today
   const months=new Set();
   allResources.forEach(r=>{
-    if(r.start_date){const d=new Date(r.start_date);if(!isNaN(d))months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
-    if(r.end_date){const d=new Date(r.end_date);if(!isNaN(d))months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
-    if(r.month_added)months.add(r.month_added);
+    const sd=parseDateSafe(r.start_date);if(sd)months.add(sd.getFullYear()+'-'+String(sd.getMonth()+1).padStart(2,'0'));
+    const ed=parseDateSafe(r.end_date);if(ed)months.add(ed.getFullYear()+'-'+String(ed.getMonth()+1).padStart(2,'0'));
   });
-  // Also add current month and surrounding months
   const now=new Date();
-  for(let m=-6;m<=6;m++){const d=new Date(now.getFullYear(),now.getMonth()+m,1);months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+  for(let m=-12;m<=12;m++){const d=new Date(now.getFullYear(),now.getMonth()+m,1);months.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
   const sortedMonths=[...months].filter(m=>/^\d{4}-\d{2}$/.test(m)).sort().reverse();
 
   const selMonth=document.getElementById('gm-view').dataset.month||now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-
-  // Filter resources active in selected month
   const[yr,mn]=selMonth.split('-').map(Number);
   const monthStart=new Date(yr,mn-1,1);
-  const monthEnd=new Date(yr,mn,0);
+  const monthEnd=new Date(yr,mn,0,23,59,59);
 
+  // A resource is "active during this month" if its assignment window overlaps the month.
+  //   - started on or before month-end (or no start date recorded)
+  //   - ended on or after month-start (or still ongoing — no end date)
+  // This correctly includes resources that began months earlier and are still running.
   const inMonthRaw=allResources.filter(r=>{
-    const sd=r.start_date?new Date(r.start_date):null;
-    const ed=r.end_date?new Date(r.end_date):null;
-    if(sd&&sd>monthEnd)return false;
-    if(ed&&ed<monthStart)return false;
+    const sd=parseDateSafe(r.start_date);
+    const ed=parseDateSafe(r.end_date);
+    if(sd&&sd>monthEnd)return false;        // hasn't started yet
+    if(ed&&ed<monthStart)return false;      // already ended before this month
+    // If no dates at all, include only if status implies currently active
+    if(!sd&&!ed){
+      const s=(r.status||'').toLowerCase();
+      if(s&&['ended','closed','inactive'].includes(s))return false;
+    }
     return true;
   });
-  // Dedupe: unique by name + client + project + start_date + rates + status
+  // Dedupe: unique by full field signature
   const seenSigs=new Set();
   const inMonth=inMonthRaw.filter(r=>{
     const sig=[r.name,r.client,r.project,r.start_date,r.end_date,r.fe_rate_regular,r.be_rate_regular,r.gross_margin,r.status]
