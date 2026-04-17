@@ -94,7 +94,7 @@ const EMP_ORDER=['type','name','client','project','status','start_date','end_dat
 
       if(k==='gross_margin'){
         let gm;
-        if(rec.gross_margin&&rec.gross_margin!=='0'){gm=parseFloat(rec.gross_margin).toFixed(2)}
+        if(rec.gross_margin!==null&&rec.gross_margin!==undefined&&String(rec.gross_margin).trim()!==''){const n=parseFloat(rec.gross_margin);gm=isNaN(n)?String(rec.gross_margin):n.toFixed(2)}
         else{const bill=parseFloat(rec.fe_rate_regular)||0;const pay=parseFloat(rec.be_rate_regular)||0;gm=(bill||pay)?(bill-pay).toFixed(2):'0.00'}
         html+=`<div class="field-row"><div class="field-label">${label}</div><div class="field-value"><span class="gm-highlight">$${gm}/hr</span></div></div>`;
         return;

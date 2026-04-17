@@ -429,9 +429,12 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 async function api(url,opts={}){const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts,body:opts.body?JSON.stringify(opts.body):undefined});const d=await r.json();if(!r.ok)throw new Error(d.error||'Failed');return d}
 
+// Treat any non-empty user-entered GM as authoritative — including "0" (break-even).
+// Only compute bill-pay when the field is truly absent.
+function hasUserGM(rec){return rec.gross_margin!==null&&rec.gross_margin!==undefined&&String(rec.gross_margin).trim()!==''}
 function rawCellValue(rec,k){
   if(k==='gross_margin'){
-    if(rec.gross_margin&&rec.gross_margin!=='0')return parseFloat(rec.gross_margin).toFixed(2);
+    if(hasUserGM(rec)){const n=parseFloat(rec.gross_margin);return isNaN(n)?String(rec.gross_margin):n.toFixed(2)}
     const b=parseFloat(rec.fe_rate_regular)||0;const p=parseFloat(rec.be_rate_regular)||0;
     return(b||p)?(b-p).toFixed(2):'';
   }
@@ -496,7 +499,7 @@ async function loadAllData(){
 
 // ── GM strip ──
 function getGM(r){
-  if(r.gross_margin&&r.gross_margin!=='0')return parseFloat(r.gross_margin)||0;
+  if(hasUserGM(r)){const n=parseFloat(r.gross_margin);return isNaN(n)?0:n}
   const b=parseFloat(r.fe_rate_regular)||0,p=parseFloat(r.be_rate_regular)||0;
   return(b||p)?b-p:0;
 }
