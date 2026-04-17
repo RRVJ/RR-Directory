@@ -14,6 +14,14 @@ from urllib.error import URLError, HTTPError
 from flask import Flask, request, jsonify, session, send_from_directory, Response
 import bcrypt
 
+# Optional Postgres driver (only required when DATABASE_URL is set)
+try:
+    import psycopg2
+    import psycopg2.extras
+    _HAS_PG = True
+except ImportError:
+    _HAS_PG = False
+
 # ── Load .env ──
 env_path = Path(__file__).parent / '.env'
 if env_path.exists():
@@ -24,6 +32,13 @@ if env_path.exists():
             os.environ.setdefault(k.strip(), v.strip())
 
 PORT = int(os.environ.get('PORT', 3000))
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+USE_POSTGRES = bool(DATABASE_URL)
+if USE_POSTGRES and not _HAS_PG:
+    raise RuntimeError('DATABASE_URL is set but psycopg2 is not installed. Run: pip install psycopg2-binary')
+# Normalize old-style postgres:// URLs
+if USE_POSTGRES and DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = 'postgresql://' + DATABASE_URL[len('postgres://'):]
 # Use /data (Render persistent disk) if available, otherwise local
 _data_dir = Path('/data') if Path('/data').exists() else Path(__file__).parent
 DB_PATH = _data_dir / 'reqroute.db'
@@ -79,90 +94,133 @@ def sanitize_str(val, max_len=MAX_FIELD_LEN):
     s = str(val).strip()
     return s[:max_len] if s else None
 
-# ── Database ──
+# ── Database dialect abstraction ──
+# We write SQL using SQLite syntax (? placeholders, datetime('now'))
+# and translate to Postgres at execute-time when DATABASE_URL is set.
+
+def _translate_sql(sql):
+    """Translate SQLite-flavored SQL to Postgres at execute-time."""
+    # datetime('now') -> CURRENT_TIMESTAMP (match both quote styles)
+    sql = re.sub(r"datetime\(\s*['\"]now['\"]\s*\)", "CURRENT_TIMESTAMP", sql, flags=re.IGNORECASE)
+    # ? placeholders -> %s (but don't touch ? inside string literals; we don't use any)
+    sql = sql.replace('?', '%s')
+    return sql
+
+class _PGCursorWrapper:
+    """Makes psycopg2 cursor/connection mimic sqlite3 enough for our code."""
+    def __init__(self, conn):
+        self._conn = conn
+        self._cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self._last_rowcount = 0
+
+    def execute(self, sql, params=()):
+        self._cur.execute(_translate_sql(sql), tuple(params) if params else None)
+        self._last_rowcount = self._cur.rowcount
+        return self
+
+    def fetchone(self):
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        return self._cur.fetchall()
+
+    def close(self):
+        self._cur.close()
+
+class _PGConnWrapper:
+    def __init__(self):
+        self._conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        self._conn.autocommit = False
+
+    def execute(self, sql, params=()):
+        cur = _PGCursorWrapper(self._conn)
+        return cur.execute(sql, params)
+
+    def executescript(self, script):
+        cur = self._conn.cursor()
+        cur.execute(script)
+        cur.close()
+        self._conn.commit()
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        try: self._conn.close()
+        except: pass
+
 def get_db():
+    if USE_POSTGRES:
+        return _PGConnWrapper()
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL')
     conn.execute('PRAGMA foreign_keys=ON')
     return conn
 
+# Schema — use TEXT for everything so SQLite and Postgres both accept it
+_SCHEMA_STATEMENTS = [
+    '''CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''',
+    '''CREATE TABLE IF NOT EXISTS resources (
+        id TEXT PRIMARY KEY,
+        counter TEXT, s_no TEXT, month_added TEXT,
+        name TEXT NOT NULL,
+        type_of_hire TEXT, skill_set TEXT,
+        contractor_phone TEXT, contractor_email TEXT,
+        jc_cats TEXT, candidate_cats TEXT, assignment_no TEXT,
+        start_date TEXT, end_date TEXT,
+        contract_status TEXT DEFAULT 'Active',
+        client TEXT, customer TEXT, client_contact TEXT,
+        client_employee_id TEXT, client_po_number TEXT,
+        client_timesheet_cycle TEXT, client_payment_terms TEXT,
+        invoicing_type TEXT, rate_type TEXT,
+        fe_rate_regular TEXT, fe_rate_ot TEXT,
+        be_rate_regular TEXT, be_rate_ot TEXT,
+        expenses_paid TEXT, hc TEXT, hc_cost_month TEXT,
+        per_diem_rate TEXT, gross_margin TEXT,
+        vendor_name TEXT, vendor_email TEXT, vendor_phone TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+    )''',
+    '''CREATE TABLE IF NOT EXISTS employees (
+        id TEXT PRIMARY KEY,
+        type TEXT,
+        name TEXT NOT NULL,
+        client TEXT, project TEXT,
+        status TEXT DEFAULT 'Active',
+        start_date TEXT, end_date TEXT,
+        vendor_name TEXT, vendor_phone TEXT, vendor_email TEXT,
+        fe_rate_regular TEXT, be_rate_regular TEXT, gross_margin TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_by TEXT
+    )'''
+]
+
 def init_db():
     conn = get_db()
-    conn.executescript('''
-        CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            display_name TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user',
-            created_at TEXT DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS resources (
-            id TEXT PRIMARY KEY,
-            counter TEXT,
-            s_no TEXT,
-            month_added TEXT,
-            name TEXT NOT NULL,
-            type_of_hire TEXT,
-            skill_set TEXT,
-            contractor_phone TEXT,
-            contractor_email TEXT,
-            jc_cats TEXT,
-            candidate_cats TEXT,
-            assignment_no TEXT,
-            start_date TEXT,
-            end_date TEXT,
-            contract_status TEXT DEFAULT 'Active',
-            client TEXT,
-            customer TEXT,
-            client_contact TEXT,
-            client_employee_id TEXT,
-            client_po_number TEXT,
-            client_timesheet_cycle TEXT,
-            client_payment_terms TEXT,
-            invoicing_type TEXT,
-            rate_type TEXT,
-            fe_rate_regular TEXT,
-            fe_rate_ot TEXT,
-            be_rate_regular TEXT,
-            be_rate_ot TEXT,
-            expenses_paid TEXT,
-            hc TEXT,
-            hc_cost_month TEXT,
-            per_diem_rate TEXT,
-            gross_margin TEXT,
-            vendor_name TEXT,
-            vendor_email TEXT,
-            vendor_phone TEXT,
-            notes TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
-            updated_by TEXT
-        );
-        CREATE TABLE IF NOT EXISTS employees (
-            id TEXT PRIMARY KEY,
-            type TEXT,
-            name TEXT NOT NULL,
-            client TEXT,
-            project TEXT,
-            status TEXT DEFAULT 'Active',
-            start_date TEXT,
-            end_date TEXT,
-            vendor_name TEXT,
-            vendor_phone TEXT,
-            vendor_email TEXT,
-            fe_rate_regular TEXT,
-            be_rate_regular TEXT,
-            gross_margin TEXT,
-            notes TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
-            updated_by TEXT
-        );
-    ''')
+    if USE_POSTGRES:
+        for stmt in _SCHEMA_STATEMENTS:
+            conn.execute(stmt)
+        conn.commit()
+    else:
+        conn.executescript(';\n'.join(_SCHEMA_STATEMENTS) + ';')
     # ── Create default accounts ──
-    existing = conn.execute('SELECT COUNT(*) as cnt FROM users').fetchone()['cnt']
+    row = conn.execute('SELECT COUNT(*) as cnt FROM users').fetchone()
+    existing = row['cnt'] if row else 0
     if existing == 0:
         admin_hash = bcrypt.hashpw(b'admin@123', bcrypt.gensalt()).decode('utf-8')
         user_hash = bcrypt.hashpw(b'user1', bcrypt.gensalt()).decode('utf-8')
